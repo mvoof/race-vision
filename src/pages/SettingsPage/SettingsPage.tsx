@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../../stores';
 import { openFolderDialog, scanTelemetryFolder } from '../../services/tauri';
@@ -16,19 +16,17 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
     setTelemetryFiles,
     setScanning,
     setScanError,
+    isDialogOpen,
+    setDialogOpen,
   } = useSettingsStore();
-
-  const [isSelectingFolder, setIsSelectingFolder] = useState(false);
-  const isDialogOpenRef = useRef(false);
 
   const handleSelectFolder = useCallback(async () => {
     // Prevent multiple dialogs
-    if (isDialogOpenRef.current || isSelectingFolder) {
+    if (isDialogOpen) {
       return;
     }
 
-    isDialogOpenRef.current = true;
-    setIsSelectingFolder(true);
+    setDialogOpen(true);
 
     try {
       const folder = await openFolderDialog();
@@ -49,11 +47,11 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
         }
       }
     } finally {
-      isDialogOpenRef.current = false;
-      setIsSelectingFolder(false);
+      setDialogOpen(false);
     }
   }, [
-    isSelectingFolder,
+    isDialogOpen,
+    setDialogOpen,
     setTelemetryFolder,
     setTelemetryFiles,
     setScanning,
@@ -100,9 +98,9 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
               <button
                 className={styles.selectButton}
                 onClick={handleSelectFolder}
-                disabled={isSelectingFolder}
+                disabled={isDialogOpen}
               >
-                {isSelectingFolder ? t('loading') : t('selectFolder')}
+                {isDialogOpen ? t('loading') : t('selectFolder')}
               </button>
               {telemetryFolder && (
                 <button

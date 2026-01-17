@@ -14,6 +14,9 @@ interface SettingsState {
   isScanning: boolean;
   scanError: string | null;
 
+  // Dialog state (global to prevent multiple dialogs)
+  isDialogOpen: boolean;
+
   // Store instance (initialized lazily)
   _store: Store | null;
 
@@ -23,6 +26,7 @@ interface SettingsState {
   setTelemetryFiles: (files: TelemetryFileInfo[]) => void;
   setScanning: (isScanning: boolean) => void;
   setScanError: (error: string | null) => void;
+  setDialogOpen: (isOpen: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
@@ -31,6 +35,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   telemetryFiles: [],
   isScanning: false,
   scanError: null,
+  isDialogOpen: false,
   _store: null,
 
   // Initialize the store and load saved settings
@@ -70,6 +75,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setTelemetryFiles: (files) => set({ telemetryFiles: files }),
   setScanning: (isScanning) => set({ isScanning }),
   setScanError: (scanError) => set({ scanError }),
+  setDialogOpen: (isDialogOpen) => set({ isDialogOpen }),
 }));
 
 // Selectors
@@ -79,3 +85,4 @@ export const selectTelemetryFiles = (state: SettingsState) =>
   state.telemetryFiles;
 export const selectIsScanning = (state: SettingsState) => state.isScanning;
 export const selectScanError = (state: SettingsState) => state.scanError;
+export const selectIsDialogOpen = (state: SettingsState) => state.isDialogOpen;
