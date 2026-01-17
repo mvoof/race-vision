@@ -6,11 +6,17 @@ import type { DateFormat } from '../utils/dateFormat';
 const STORE_NAME = 'settings.json';
 const TELEMETRY_FOLDER_KEY = 'telemetryFolder';
 const DATE_FORMAT_KEY = 'dateFormat';
+const AUTO_SCAN_ENABLED_KEY = 'autoScanEnabled';
+const AUTO_SCAN_INTERVAL_KEY = 'autoScanInterval';
+
+export type AutoScanInterval = 30 | 60 | 120 | 300;
 
 interface SettingsState {
   // Settings
   telemetryFolder: string | null;
   dateFormat: DateFormat;
+  autoScanEnabled: boolean;
+  autoScanInterval: AutoScanInterval;
 
   // File list from scanned folder
   telemetryFiles: TelemetryFileInfo[];
@@ -27,6 +33,8 @@ interface SettingsState {
   initStore: () => Promise<void>;
   setTelemetryFolder: (folder: string | null) => Promise<void>;
   setDateFormat: (format: DateFormat) => Promise<void>;
+  setAutoScanEnabled: (enabled: boolean) => Promise<void>;
+  setAutoScanInterval: (interval: AutoScanInterval) => Promise<void>;
   setTelemetryFiles: (files: TelemetryFileInfo[]) => void;
   setScanning: (isScanning: boolean) => void;
   setScanError: (error: string | null) => void;
@@ -37,6 +45,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   // Initial state
   telemetryFolder: null,
   dateFormat: 'locale',
+  autoScanEnabled: false,
+  autoScanInterval: 60,
   telemetryFiles: [],
   isScanning: false,
   scanError: null,
@@ -49,10 +59,18 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       const store = await load(STORE_NAME);
       const savedFolder = await store.get<string>(TELEMETRY_FOLDER_KEY);
       const savedDateFormat = await store.get<DateFormat>(DATE_FORMAT_KEY);
+      const savedAutoScanEnabled = await store.get<boolean>(
+        AUTO_SCAN_ENABLED_KEY
+      );
+      const savedAutoScanInterval = await store.get<AutoScanInterval>(
+        AUTO_SCAN_INTERVAL_KEY
+      );
       set({
         _store: store,
         telemetryFolder: savedFolder || null,
         dateFormat: savedDateFormat || 'locale',
+        autoScanEnabled: savedAutoScanEnabled ?? false,
+        autoScanInterval: savedAutoScanInterval || 60,
       });
     } catch (error) {
       console.error('Failed to initialize settings store:', error);
@@ -95,6 +113,38 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
   },
 
+  // Set and persist auto scan enabled
+  setAutoScanEnabled: async (enabled: boolean) => {
+    const { _store } = get();
+
+    set({ autoScanEnabled: enabled });
+
+    if (_store) {
+      try {
+        await _store.set(AUTO_SCAN_ENABLED_KEY, enabled);
+        await _store.save();
+      } catch (error) {
+        console.error('Failed to save auto scan enabled:', error);
+      }
+    }
+  },
+
+  // Set and persist auto scan interval
+  setAutoScanInterval: async (interval: AutoScanInterval) => {
+    const { _store } = get();
+
+    set({ autoScanInterval: interval });
+
+    if (_store) {
+      try {
+        await _store.set(AUTO_SCAN_INTERVAL_KEY, interval);
+        await _store.save();
+      } catch (error) {
+        console.error('Failed to save auto scan interval:', error);
+      }
+    }
+  },
+
   setTelemetryFiles: (files) => set({ telemetryFiles: files }),
   setScanning: (isScanning) => set({ isScanning }),
   setScanError: (scanError) => set({ scanError }),
@@ -105,6 +155,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 export const selectTelemetryFolder = (state: SettingsState) =>
   state.telemetryFolder;
 export const selectDateFormat = (state: SettingsState) => state.dateFormat;
+export const selectAutoScanEnabled = (state: SettingsState) =>
+  state.autoScanEnabled;
+export const selectAutoScanInterval = (state: SettingsState) =>
+  state.autoScanInterval;
 export const selectTelemetryFiles = (state: SettingsState) =>
   state.telemetryFiles;
 export const selectIsScanning = (state: SettingsState) => state.isScanning;

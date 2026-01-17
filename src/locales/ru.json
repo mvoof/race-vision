@@ -64,6 +64,12 @@
     "yesterday": "Вчера",
     "thisWeek": "На этой неделе",
     "thisMonth": "В этом месяце",
-    "earlier": "Ранее"
+    "earlier": "Ранее",
+    "autoScan": "Автосканирование",
+    "autoScanDescription": "Автоматически сканировать папку телеметрии на наличие новых файлов с заданным интервалом.",
+    "autoScanEnabled": "Включить автосканирование",
+    "seconds": "{{count}} сек",
+    "minute": "{{count}} мин",
+    "minutes": "{{count}} мин"
   }
 }

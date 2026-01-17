@@ -2,44 +2,22 @@ import { useState, useEffect, useCallback } from 'react';
 import { HomePage } from './pages/HomePage';
 import { SettingsPage } from './pages/SettingsPage';
 import { useSettingsStore } from './stores';
-import { scanTelemetryFolder } from './services/tauri';
+import { useAutoScan } from './hooks';
 import './styles/global.scss';
 
 type Page = 'home' | 'settings';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
-  const {
-    initStore,
-    telemetryFolder,
-    setTelemetryFiles,
-    setScanning,
-    setScanError,
-  } = useSettingsStore();
+  const { initStore } = useSettingsStore();
 
   // Initialize settings store on app start
   useEffect(() => {
     initStore();
   }, [initStore]);
 
-  // Scan telemetry folder when it's loaded from settings
-  useEffect(() => {
-    if (telemetryFolder) {
-      setScanning(true);
-      setScanError(null);
-      scanTelemetryFolder(telemetryFolder)
-        .then((files) => {
-          setTelemetryFiles(files);
-        })
-        .catch((err) => {
-          setScanError(err instanceof Error ? err.message : String(err));
-          setTelemetryFiles([]);
-        })
-        .finally(() => {
-          setScanning(false);
-        });
-    }
-  }, [telemetryFolder, setTelemetryFiles, setScanning, setScanError]);
+  // Auto-scan telemetry folder (initial + periodic)
+  useAutoScan();
 
   const handleOpenSettings = useCallback(() => {
     setCurrentPage('settings');

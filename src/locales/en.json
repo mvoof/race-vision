@@ -64,6 +64,12 @@
     "yesterday": "Yesterday",
     "thisWeek": "This Week",
     "thisMonth": "This Month",
-    "earlier": "Earlier"
+    "earlier": "Earlier",
+    "autoScan": "Auto Scan",
+    "autoScanDescription": "Automatically scan the telemetry folder for new files at regular intervals.",
+    "autoScanEnabled": "Enable auto scan",
+    "seconds": "{{count}} sec",
+    "minute": "{{count}} min",
+    "minutes": "{{count}} min"
   }
 }

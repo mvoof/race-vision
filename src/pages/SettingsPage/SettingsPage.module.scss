@@ -190,3 +190,95 @@
   font-family: $font-mono;
   margin-top: 2px;
 }
+
+// Auto-scan settings
+.autoScanSettings {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.autoScanToggle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.toggleSwitch {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  background: $bg-tertiary;
+  border: 1px solid $border-color;
+  border-radius: 13px;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: $text-secondary;
+    border-radius: 50%;
+    transition:
+      transform 0.2s,
+      background-color 0.2s;
+  }
+
+  &.active {
+    background: $accent-primary;
+    border-color: $accent-primary;
+
+    &::after {
+      transform: translateX(22px);
+      background: white;
+    }
+  }
+
+  &:hover {
+    border-color: $accent-primary;
+  }
+}
+
+.toggleLabel {
+  font-size: $font-size-md;
+  color: $text-primary;
+}
+
+.intervalSelector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+  opacity: 1;
+  transition: opacity 0.2s;
+
+  &.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+.intervalButton {
+  @include button-base;
+  padding: $spacing-sm $spacing-md;
+  background: $bg-tertiary;
+  color: $text-secondary;
+  border: 1px solid $border-color;
+  min-width: 80px;
+
+  &:hover {
+    background: $bg-hover;
+    color: $text-primary;
+  }
+
+  &.active {
+    background: $accent-primary;
+    color: white;
+    border-color: $accent-primary;
+  }
+}

@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSettingsStore } from '../../stores';
+import { useSettingsStore, type AutoScanInterval } from '../../stores';
 import { openFolderDialog, scanTelemetryFolder } from '../../services/tauri';
 import type { DateFormat } from '../../utils/dateFormat';
 import styles from './SettingsPage.module.scss';
@@ -116,6 +116,14 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
         </section>
 
         <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>{t('autoScan')}</h2>
+          <p className={styles.sectionDescription}>
+            {t('autoScanDescription')}
+          </p>
+          <AutoScanSelector />
+        </section>
+
+        <section className={styles.section}>
           <h2 className={styles.sectionTitle}>{t('language')}</h2>
           <LanguageSelector />
         </section>
@@ -207,6 +215,65 @@ function formatExampleDate(format: 'eu' | 'us'): string {
 
   if (format === 'eu') return `${day}.${month}.${year}`;
   return `${month}/${day}/${year}`;
+}
+
+function AutoScanSelector() {
+  const { t } = useTranslation();
+  const {
+    autoScanEnabled,
+    autoScanInterval,
+    setAutoScanEnabled,
+    setAutoScanInterval,
+  } = useSettingsStore();
+
+  const intervals: { value: AutoScanInterval; label: string }[] = [
+    { value: 30, label: t('seconds', { count: 30 }) },
+    { value: 60, label: t('minute', { count: 1 }) },
+    { value: 120, label: t('minutes', { count: 2 }) },
+    { value: 300, label: t('minutes', { count: 5 }) },
+  ];
+
+  const handleToggle = useCallback(() => {
+    setAutoScanEnabled(!autoScanEnabled);
+  }, [autoScanEnabled, setAutoScanEnabled]);
+
+  const handleIntervalChange = useCallback(
+    (interval: AutoScanInterval) => {
+      setAutoScanInterval(interval);
+    },
+    [setAutoScanInterval]
+  );
+
+  return (
+    <div className={styles.autoScanSettings}>
+      <div className={styles.autoScanToggle}>
+        <button
+          type="button"
+          className={`${styles.toggleSwitch} ${autoScanEnabled ? styles.active : ''}`}
+          onClick={handleToggle}
+          aria-pressed={autoScanEnabled}
+          aria-label={t('autoScanEnabled')}
+        />
+        <span className={styles.toggleLabel}>{t('autoScanEnabled')}</span>
+      </div>
+
+      <div
+        className={`${styles.intervalSelector} ${!autoScanEnabled ? styles.disabled : ''}`}
+      >
+        {intervals.map((interval) => (
+          <button
+            key={interval.value}
+            type="button"
+            className={`${styles.intervalButton} ${autoScanInterval === interval.value ? styles.active : ''}`}
+            onClick={() => handleIntervalChange(interval.value)}
+            disabled={!autoScanEnabled}
+          >
+            {interval.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default SettingsPage;

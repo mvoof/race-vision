@@ -28,7 +28,12 @@ export {
 export {
   useSettingsStore,
   selectTelemetryFolder,
+  selectDateFormat,
+  selectAutoScanEnabled,
+  selectAutoScanInterval,
   selectTelemetryFiles,
   selectIsScanning,
   selectScanError,
+  selectIsDialogOpen,
+  type AutoScanInterval,
 } from './settingsStore';
