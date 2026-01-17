@@ -1,5 +1,5 @@
 import React from 'react';
-import { useCallback, useState, useEffect, useRef, useMemo } from 'react';
+import { useCallback, useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSessionStore, useSettingsStore } from '../../stores';
 import {
@@ -18,6 +18,8 @@ interface HomePageProps {
 
 export function HomePage({ onOpenSettings }: HomePageProps) {
   const { t } = useTranslation();
+
+  // Session store - always called
   const {
     session,
     laps,
@@ -34,9 +36,21 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
     setTrajectory,
     setLoadingTrajectory,
   } = useSessionStore();
+
+  // Settings store - always called
+  const {
+    telemetryFiles,
+    telemetryFolder,
+    isScanning,
+    isDialogOpen,
+    setDialogOpen,
+  } = useSettingsStore();
+
+  // Local state - always called
   const [isDragOver, setIsDragOver] = useState(false);
   const [colorMode, setColorMode] = useState<ColorMode>('speed');
-  const isDialogOpenRef = useRef(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'date' | 'name' | 'track'>('date');
 
   // Load trajectory when lap is selected
   useEffect(() => {
@@ -69,13 +83,45 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
     };
   }, [selectedLapNumber, setTrajectory, setLoadingTrajectory]);
 
+  // Filtered and sorted files
+  const filteredFiles = useMemo(() => {
+    let files = [...telemetryFiles];
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      files = files.filter(
+        (file) =>
+          file.fileName.toLowerCase().includes(query) ||
+          file.trackName?.toLowerCase().includes(query) ||
+          file.carName?.toLowerCase().includes(query) ||
+          file.driverName?.toLowerCase().includes(query)
+      );
+    }
+
+    // Sort
+    files.sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.fileName.localeCompare(b.fileName);
+        case 'track':
+          return (a.trackName || '').localeCompare(b.trackName || '');
+        case 'date':
+        default:
+          return b.modifiedTime - a.modifiedTime;
+      }
+    });
+
+    return files;
+  }, [telemetryFiles, searchQuery, sortBy]);
+
   const handleOpenFile = useCallback(async () => {
     // Prevent opening multiple dialogs
-    if (isDialogOpenRef.current || isLoading) {
+    if (isDialogOpen || isLoading) {
       return;
     }
 
-    isDialogOpenRef.current = true;
+    setDialogOpen(true);
     setLoading(true);
     setError(null);
     setSelectedLap(null);
@@ -90,11 +136,13 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
-      isDialogOpenRef.current = false;
+      setDialogOpen(false);
       setLoading(false);
     }
   }, [
+    isDialogOpen,
     isLoading,
+    setDialogOpen,
     setSession,
     setLaps,
     setLoading,
@@ -112,6 +160,39 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
       }
     },
     [selectedLapNumber, setSelectedLap]
+  );
+
+  const handleFileSelect = useCallback(
+    async (file: TelemetryFileInfo) => {
+      if (isDialogOpen || isLoading) {
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+      setSelectedLap(null);
+      setTrajectory([]);
+
+      try {
+        const result = await loadTelemetryFile(file.path);
+        setSession(result.session);
+        setLaps(result.laps);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      isDialogOpen,
+      isLoading,
+      setSession,
+      setLaps,
+      setLoading,
+      setError,
+      setSelectedLap,
+      setTrajectory,
+    ]
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -147,7 +228,7 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
             <button
               className={styles.openButton}
               onClick={handleOpenFile}
-              disabled={isLoading}
+              disabled={isLoading || isDialogOpen}
             >
               {isLoading ? t('loading') : t('openFile')}
             </button>
@@ -235,8 +316,6 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
                 <div className={styles.trackContainer}>
                   <TrackCanvas
                     trajectory={trajectory}
-                    width={500}
-                    height={400}
                     colorMode={colorMode}
                   />
                   {selectedLap && (
@@ -264,66 +343,7 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
     );
   }
 
-  // Welcome screen with file open and file list
-  const { telemetryFiles, telemetryFolder, isScanning } = useSettingsStore();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'date' | 'name' | 'track'>('date');
-
-  const filteredFiles = useMemo(() => {
-    let files = [...telemetryFiles];
-
-    // Filter by search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      files = files.filter(
-        (file) =>
-          file.fileName.toLowerCase().includes(query) ||
-          file.trackName?.toLowerCase().includes(query) ||
-          file.carName?.toLowerCase().includes(query) ||
-          file.driverName?.toLowerCase().includes(query)
-      );
-    }
-
-    // Sort
-    files.sort((a, b) => {
-      switch (sortBy) {
-        case 'name':
-          return a.fileName.localeCompare(b.fileName);
-        case 'track':
-          return (a.trackName || '').localeCompare(b.trackName || '');
-        case 'date':
-        default:
-          return b.modifiedTime - a.modifiedTime;
-      }
-    });
-
-    return files;
-  }, [telemetryFiles, searchQuery, sortBy]);
-
-  const handleFileSelect = useCallback(
-    async (file: TelemetryFileInfo) => {
-      if (isDialogOpenRef.current || isLoading) {
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-      setSelectedLap(null);
-      setTrajectory([]);
-
-      try {
-        const result = await loadTelemetryFile(file.path);
-        setSession(result.session);
-        setLaps(result.laps);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : String(err));
-      } finally {
-        setLoading(false);
-      }
-    },
-    [isLoading, setSession, setLaps, setLoading, setError, setSelectedLap, setTrajectory]
-  );
-
+  // Welcome screen - show file list if folder is configured, otherwise show file open
   return (
     <div
       className={`${styles.welcome} ${isDragOver ? styles.dragOver : ''}`}
@@ -351,81 +371,11 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
         </svg>
       </button>
 
-      <div className={styles.welcomeContent}>
-        <div className={styles.logo}>
-          <svg viewBox="0 0 48 48" fill="none" className={styles.logoIcon}>
-            <circle
-              cx="24"
-              cy="24"
-              r="20"
-              stroke="currentColor"
-              strokeWidth="2"
-            />
-            <path
-              d="M24 8 L24 24 L36 32"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <circle cx="24" cy="24" r="3" fill="currentColor" />
-          </svg>
-        </div>
-
-        <h1 className={styles.title}>Race Vision</h1>
-        <p className={styles.subtitle}>{t('welcomeSubtitle')}</p>
-
-        <button
-          className={styles.openFileButton}
-          onClick={handleOpenFile}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <span className={styles.spinner} />
-              {t('loading')}
-            </>
-          ) : (
-            <>
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                className={styles.buttonIcon}
-              >
-                <path
-                  d="M3 15V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V15"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M12 3V15M12 15L7 10M12 15L17 10"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              {t('openTelemetryFile')}
-            </>
-          )}
-        </button>
-
-        <p className={styles.hint}>{t('dropFileHint')}</p>
-
-        {error && <div className={styles.error}>{error}</div>}
-
-        <div className={styles.supportedFormats}>
-          <span className={styles.formatsLabel}>{t('supportedFormats')}:</span>
-          <span className={styles.format}>Le Mans Ultimate (.duckdb)</span>
-        </div>
-      </div>
-
-      {/* File list from telemetry folder */}
-      {telemetryFolder && (
-        <div className={styles.fileListSection}>
+      {/* Show file list if folder is configured, otherwise show file open prompt */}
+      {telemetryFolder ? (
+        <div className={styles.fileListFullPage}>
           <div className={styles.fileListHeader}>
-            <h2 className={styles.fileListTitle}>{t('recentFiles')}</h2>
+            <h1 className={styles.fileListTitle}>{t('selectTelemetry')}</h1>
             <div className={styles.fileListControls}>
               <input
                 type="text"
@@ -437,7 +387,9 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
               <select
                 className={styles.sortSelect}
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as 'date' | 'name' | 'track')}
+                onChange={(e) =>
+                  setSortBy(e.target.value as 'date' | 'name' | 'track')
+                }
               >
                 <option value="date">{t('sortByDate')}</option>
                 <option value="name">{t('sortByName')}</option>
@@ -446,29 +398,33 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
             </div>
           </div>
 
+          {error && <div className={styles.error}>{error}</div>}
+
           {isScanning ? (
             <div className={styles.fileListLoading}>
               <span className={styles.spinner} />
               {t('scanning')}
             </div>
           ) : filteredFiles.length > 0 ? (
-            <div className={styles.fileList}>
+            <div className={styles.fileListGrid}>
               {filteredFiles.map((file) => (
                 <div
                   key={file.path}
-                  className={styles.fileItem}
-                  onClick={() => handleFileSelect(file)}
+                  className={`${styles.fileCard} ${isLoading ? styles.disabled : ''}`}
+                  onClick={() => !isLoading && handleFileSelect(file)}
                 >
-                  <div className={styles.fileInfo}>
-                    <span className={styles.fileTrack}>
-                      {file.trackName || t('unknownTrack')}
+                  <div className={styles.fileCardTrack}>
+                    {file.trackName || t('unknownTrack')}
+                  </div>
+                  <div className={styles.fileCardMeta}>
+                    <span className={styles.fileCardCar}>
+                      {file.carName || t('unknownCar')}
                     </span>
-                    <span className={styles.fileMeta}>
-                      {file.carName || t('unknownCar')} •{' '}
+                    <span className={styles.fileCardSession}>
                       {file.sessionType || t('unknown')}
                     </span>
                   </div>
-                  <div className={styles.fileDate}>
+                  <div className={styles.fileCardDate}>
                     {new Date(file.modifiedTime * 1000).toLocaleDateString()}
                   </div>
                 </div>
@@ -479,6 +435,83 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
               {searchQuery ? t('noFilesMatch') : t('noFilesInFolder')}
             </div>
           )}
+        </div>
+      ) : (
+        <div className={styles.welcomeContent}>
+          <div className={styles.logo}>
+            <svg viewBox="0 0 48 48" fill="none" className={styles.logoIcon}>
+              <circle
+                cx="24"
+                cy="24"
+                r="20"
+                stroke="currentColor"
+                strokeWidth="2"
+              />
+              <path
+                d="M24 8 L24 24 L36 32"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <circle cx="24" cy="24" r="3" fill="currentColor" />
+            </svg>
+          </div>
+
+          <h1 className={styles.title}>Race Vision</h1>
+          <p className={styles.subtitle}>{t('welcomeSubtitle')}</p>
+
+          <button
+            className={styles.openFileButton}
+            onClick={handleOpenFile}
+            disabled={isLoading || isDialogOpen}
+          >
+            {isLoading ? (
+              <>
+                <span className={styles.spinner} />
+                {t('loading')}
+              </>
+            ) : (
+              <>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className={styles.buttonIcon}
+                >
+                  <path
+                    d="M3 15V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V15"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M12 3V15M12 15L7 10M12 15L17 10"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                {t('openTelemetryFile')}
+              </>
+            )}
+          </button>
+
+          <p className={styles.hint}>{t('dropFileHint')}</p>
+
+          {error && <div className={styles.error}>{error}</div>}
+
+          <div className={styles.supportedFormats}>
+            <span className={styles.formatsLabel}>{t('supportedFormats')}:</span>
+            <span className={styles.format}>Le Mans Ultimate (.duckdb)</span>
+          </div>
+
+          <div className={styles.setupHint}>
+            <p>{t('setupFolderHint')}</p>
+            <button className={styles.setupButton} onClick={onOpenSettings}>
+              {t('openSettings')}
+            </button>
+          </div>
         </div>
       )}
     </div>
