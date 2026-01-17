@@ -33,7 +33,10 @@ interface UiState {
   toggleShowMarkers: () => void;
   toggleSectorMarkers: () => void;
   toggleSpeedLabels: () => void;
-  setCursorPosition: (distance: number | null, timestamp: number | null) => void;
+  setCursorPosition: (
+    distance: number | null,
+    timestamp: number | null
+  ) => void;
   setZoomRange: (range: { start: number; end: number } | null) => void;
   resetZoom: () => void;
 }
@@ -63,7 +66,8 @@ export const useUiStore = create<UiState>((set) => ({
 
   toggleShowGrid: () => set((state) => ({ showGrid: !state.showGrid })),
 
-  toggleShowMarkers: () => set((state) => ({ showMarkers: !state.showMarkers })),
+  toggleShowMarkers: () =>
+    set((state) => ({ showMarkers: !state.showMarkers })),
 
   toggleSectorMarkers: () =>
     set((state) => ({ showSectorMarkers: !state.showSectorMarkers })),
@@ -80,7 +84,8 @@ export const useUiStore = create<UiState>((set) => ({
 }));
 
 // Селекторы
-export const selectSidebarCollapsed = (state: UiState) => state.sidebarCollapsed;
+export const selectSidebarCollapsed = (state: UiState) =>
+  state.sidebarCollapsed;
 export const selectChartXAxis = (state: UiState) => state.chartXAxis;
 export const selectTrackColorMode = (state: UiState) => state.trackColorMode;
 export const selectCursorPosition = (state: UiState) => ({

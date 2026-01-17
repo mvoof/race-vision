@@ -1,3 +1,4 @@
+import React from 'react';
 import { useRef, useEffect, useCallback, useMemo, useState } from 'react';
 import type { TrajectoryPoint } from '../../../types';
 import styles from './TrackCanvas.module.scss';
@@ -17,7 +18,11 @@ interface TrackCanvasProps {
 }
 
 // Color interpolation for speed heatmap
-function speedToColor(speed: number, minSpeed: number, maxSpeed: number): string {
+function speedToColor(
+  speed: number,
+  minSpeed: number,
+  maxSpeed: number
+): string {
   const normalized = (speed - minSpeed) / (maxSpeed - minSpeed);
   // HSL: Red (0) -> Yellow (60) -> Green (120)
   const hue = normalized * 120;
@@ -38,7 +43,10 @@ function throttleBrakeToColor(throttle: number, brake: number): string {
 }
 
 // Chaikin curve smoothing algorithm
-function smoothTrajectory(points: { x: number; y: number }[], iterations = 2): { x: number; y: number }[] {
+function smoothTrajectory(
+  points: { x: number; y: number }[],
+  iterations = 2
+): { x: number; y: number }[] {
   if (points.length < 3) return points;
 
   let result = [...points];
@@ -109,7 +117,15 @@ export function TrackCanvas({
 
   // Normalize coordinates to fit canvas with padding
   const normalizedData = useMemo(() => {
-    if (trajectory.length === 0) return { points: [], minSpeed: 0, maxSpeed: 100, scale: 1, offsetX: 0, offsetY: 0 };
+    if (trajectory.length === 0)
+      return {
+        points: [],
+        minSpeed: 0,
+        maxSpeed: 100,
+        scale: 1,
+        offsetX: 0,
+        offsetY: 0,
+      };
 
     const xs = trajectory.map((p) => p.x);
     const ys = trajectory.map((p) => p.y);
@@ -249,7 +265,18 @@ export function TrackCanvas({
         ctx.stroke();
       }
     }
-  }, [normalizedData, width, height, colorMode, trackColor, backgroundColor, trackWidth, showStartFinish, cursorDistance, findPointByDistance]);
+  }, [
+    normalizedData,
+    width,
+    height,
+    colorMode,
+    trackColor,
+    backgroundColor,
+    trackWidth,
+    showStartFinish,
+    cursorDistance,
+    findPointByDistance,
+  ]);
 
   useEffect(() => {
     draw();
@@ -304,7 +331,10 @@ export function TrackCanvas({
   }, [onDistanceHover]);
 
   return (
-    <div ref={containerRef} className={`${styles.container} ${className ?? ''}`}>
+    <div
+      ref={containerRef}
+      className={`${styles.container} ${className ?? ''}`}
+    >
       <canvas
         ref={canvasRef}
         width={width}

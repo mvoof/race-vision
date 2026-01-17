@@ -46,7 +46,7 @@ export const useSelectionStore = create<SelectionState>((set, get) => ({
         selectedLaps: newSelection,
         primaryLap:
           state.primaryLap === lapNumber
-            ? newSelection[0] ?? null
+            ? (newSelection[0] ?? null)
             : state.primaryLap,
         referenceLap:
           state.referenceLap === lapNumber ? null : state.referenceLap,
@@ -90,7 +90,8 @@ export const useSelectionStore = create<SelectionState>((set, get) => ({
 export const selectSelectedLaps = (state: SelectionState) => state.selectedLaps;
 export const selectPrimaryLap = (state: SelectionState) => state.primaryLap;
 export const selectReferenceLap = (state: SelectionState) => state.referenceLap;
-export const selectIsLapSelected = (lapNumber: number) => (state: SelectionState) =>
-  state.selectedLaps.includes(lapNumber);
+export const selectIsLapSelected =
+  (lapNumber: number) => (state: SelectionState) =>
+    state.selectedLaps.includes(lapNumber);
 export const selectCanSelectMore = (state: SelectionState) =>
   state.selectedLaps.length < MAX_SELECTED_LAPS;

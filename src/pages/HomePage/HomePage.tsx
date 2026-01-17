@@ -260,8 +260,16 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
               {laps.map((lap) => (
                 <div
                   key={lap.id}
+                  role="button"
+                  tabIndex={0}
                   className={`${styles.lapItem} ${lap.isPersonalBest ? styles.bestLap : ''} ${selectedLapNumber === lap.lapNumber ? styles.selected : ''}`}
                   onClick={() => handleLapClick(lap.lapNumber)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleLapClick(lap.lapNumber);
+                    }
+                  }}
                 >
                   <span className={styles.lapNumber}>{lap.lapNumber}</span>
                   <span className={styles.lapTime}>
@@ -314,10 +322,7 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
                 </div>
               ) : trajectory.length > 0 ? (
                 <div className={styles.trackContainer}>
-                  <TrackCanvas
-                    trajectory={trajectory}
-                    colorMode={colorMode}
-                  />
+                  <TrackCanvas trajectory={trajectory} colorMode={colorMode} />
                   {selectedLap && (
                     <div className={styles.lapInfo}>
                       <span className={styles.lapInfoLabel}>
@@ -410,8 +415,16 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
               {filteredFiles.map((file) => (
                 <div
                   key={file.path}
+                  role="button"
+                  tabIndex={isLoading ? -1 : 0}
                   className={`${styles.fileCard} ${isLoading ? styles.disabled : ''}`}
                   onClick={() => !isLoading && handleFileSelect(file)}
+                  onKeyDown={(e) => {
+                    if (!isLoading && (e.key === 'Enter' || e.key === ' ')) {
+                      e.preventDefault();
+                      handleFileSelect(file);
+                    }
+                  }}
                 >
                   <div className={styles.fileCardTrack}>
                     {file.trackName || t('unknownTrack')}
@@ -502,7 +515,9 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
           {error && <div className={styles.error}>{error}</div>}
 
           <div className={styles.supportedFormats}>
-            <span className={styles.formatsLabel}>{t('supportedFormats')}:</span>
+            <span className={styles.formatsLabel}>
+              {t('supportedFormats')}:
+            </span>
             <span className={styles.format}>Le Mans Ultimate (.duckdb)</span>
           </div>
 

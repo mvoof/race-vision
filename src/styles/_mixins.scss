@@ -28,7 +28,9 @@
 
 @mixin card-hover {
   @include card;
-  transition: background $transition-fast, border-color $transition-fast;
+  transition:
+    background $transition-fast,
+    border-color $transition-fast;
 
   &:hover {
     background: $bg-hover;

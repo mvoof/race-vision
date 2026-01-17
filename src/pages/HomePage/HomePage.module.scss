@@ -170,7 +170,9 @@
   padding: $spacing-sm $spacing-md;
   border-radius: $border-radius-sm;
   cursor: pointer;
-  transition: background $transition-fast, border-color $transition-fast;
+  transition:
+    background $transition-fast,
+    border-color $transition-fast;
   border: 2px solid transparent;
 
   &:hover {

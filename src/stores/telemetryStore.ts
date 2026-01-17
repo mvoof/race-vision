@@ -37,7 +37,9 @@ export const useTelemetryStore = create<TelemetryState>((set, get) => ({
   setLapTelemetry: (lapNumber, telemetry) =>
     set((state) => ({
       telemetryCache: { ...state.telemetryCache, [lapNumber]: telemetry },
-      loadingLaps: new Set([...state.loadingLaps].filter((n) => n !== lapNumber)),
+      loadingLaps: new Set(
+        [...state.loadingLaps].filter((n) => n !== lapNumber)
+      ),
     })),
 
   setTrajectory: (lapNumber, trajectory) =>
@@ -84,6 +86,8 @@ export const useTelemetryStore = create<TelemetryState>((set, get) => ({
 }));
 
 // Селекторы
-export const selectTelemetryCache = (state: TelemetryState) => state.telemetryCache;
-export const selectTrajectoryCache = (state: TelemetryState) => state.trajectoryCache;
+export const selectTelemetryCache = (state: TelemetryState) =>
+  state.telemetryCache;
+export const selectTrajectoryCache = (state: TelemetryState) =>
+  state.trajectoryCache;
 export const selectLoadingLaps = (state: TelemetryState) => state.loadingLaps;

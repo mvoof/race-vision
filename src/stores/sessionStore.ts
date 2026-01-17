@@ -45,7 +45,8 @@ export const useSessionStore = create<SessionState>((set) => ({
 
   setSelectedLap: (selectedLapNumber) => set({ selectedLapNumber }),
 
-  setTrajectory: (trajectory) => set({ trajectory, isLoadingTrajectory: false }),
+  setTrajectory: (trajectory) =>
+    set({ trajectory, isLoadingTrajectory: false }),
 
   setLoadingTrajectory: (isLoadingTrajectory) => set({ isLoadingTrajectory }),
 
@@ -59,14 +60,18 @@ export const useSessionStore = create<SessionState>((set) => ({
 // Селекторы
 export const selectSession = (state: SessionState) => state.session;
 export const selectLaps = (state: SessionState) => state.laps;
-export const selectSelectedLapNumber = (state: SessionState) => state.selectedLapNumber;
+export const selectSelectedLapNumber = (state: SessionState) =>
+  state.selectedLapNumber;
 export const selectTrajectory = (state: SessionState) => state.trajectory;
 export const selectIsLoading = (state: SessionState) => state.isLoading;
-export const selectIsLoadingTrajectory = (state: SessionState) => state.isLoadingTrajectory;
+export const selectIsLoadingTrajectory = (state: SessionState) =>
+  state.isLoadingTrajectory;
 export const selectError = (state: SessionState) => state.error;
 
 export const selectBestLap = (state: SessionState): Lap | null => {
-  const validLaps = state.laps.filter((lap) => lap.isValid && lap.lapTime !== null);
+  const validLaps = state.laps.filter(
+    (lap) => lap.isValid && lap.lapTime !== null
+  );
   if (validLaps.length === 0) return null;
   return validLaps.reduce((best, lap) =>
     lap.lapTime! < best.lapTime! ? lap : best
@@ -75,7 +80,9 @@ export const selectBestLap = (state: SessionState): Lap | null => {
 
 export const selectSelectedLap = (state: SessionState): Lap | null => {
   if (state.selectedLapNumber === null) return null;
-  return state.laps.find((lap) => lap.lapNumber === state.selectedLapNumber) || null;
+  return (
+    state.laps.find((lap) => lap.lapNumber === state.selectedLapNumber) || null
+  );
 };
 
 export const selectValidLaps = (state: SessionState): Lap[] =>

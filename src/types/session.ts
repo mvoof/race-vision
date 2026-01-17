@@ -6,7 +6,12 @@ export type TelemetrySource = 'lmu' | 'acc' | 'iracing' | 'rf2' | 'unknown';
 /**
  * Тип сессии
  */
-export type SessionType = 'practice' | 'qualifying' | 'race' | 'hotlap' | 'unknown';
+export type SessionType =
+  | 'practice'
+  | 'qualifying'
+  | 'race'
+  | 'hotlap'
+  | 'unknown';
 
 /**
  * Погодные условия
