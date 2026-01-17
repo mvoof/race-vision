@@ -1,0 +1,145 @@
+@use 'sass:color';
+@use 'variables' as *;
+
+// Flexbox utilities
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+// Card/Panel base
+@mixin card {
+  background: $bg-card;
+  border-radius: $border-radius-md;
+  border: 1px solid $border-color;
+}
+
+@mixin card-hover {
+  @include card;
+  transition: background $transition-fast, border-color $transition-fast;
+
+  &:hover {
+    background: $bg-hover;
+    border-color: $accent-primary;
+  }
+}
+
+// Button base
+@mixin button-base {
+  @include flex-center;
+  gap: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-sm;
+  font-size: $font-size-md;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all $transition-fast;
+  border: none;
+  outline: none;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+@mixin button-primary {
+  @include button-base;
+  background: $accent-primary;
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: color.adjust($accent-primary, $lightness: 8%);
+  }
+
+  &:active:not(:disabled) {
+    background: color.adjust($accent-primary, $lightness: -4%);
+  }
+}
+
+@mixin button-secondary {
+  @include button-base;
+  background: $bg-hover;
+  color: $text-primary;
+  border: 1px solid $border-color;
+
+  &:hover:not(:disabled) {
+    background: $bg-card;
+    border-color: $accent-primary;
+  }
+}
+
+// Text truncation
+@mixin text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Scrollbar styling
+@mixin custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $bg-tertiary;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $border-color;
+    border-radius: 4px;
+
+    &:hover {
+      background: color.adjust($border-color, $lightness: 10%);
+    }
+  }
+}
+
+// Monospace numbers
+@mixin mono-numbers {
+  font-family: $font-mono;
+  font-variant-numeric: tabular-nums;
+}
+
+// Animation
+@mixin fade-in($duration: $transition-normal) {
+  animation: fadeIn $duration ease forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@mixin pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}

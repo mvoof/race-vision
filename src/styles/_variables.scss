@@ -1,0 +1,74 @@
+// Colors - Dark theme
+$bg-primary: #1a1a2e;
+$bg-secondary: #16213e;
+$bg-tertiary: #0f0f23;
+$bg-card: #1e1e3f;
+$bg-hover: #252547;
+
+$text-primary: #e8e8f0;
+$text-secondary: #a0a0b8;
+$text-muted: #6c6c8a;
+
+$accent-primary: #4a90d9;
+$accent-secondary: #64b5f6;
+$accent-success: #4caf50;
+$accent-warning: #ff9800;
+$accent-danger: #f44336;
+
+// Lap colors for comparison
+$lap-colors: (
+  1: #4a90d9,
+  2: #f44336,
+  3: #4caf50,
+  4: #ff9800,
+);
+
+// Speed heatmap colors
+$speed-slow: #f44336;
+$speed-medium: #ff9800;
+$speed-fast: #4caf50;
+
+// Borders
+$border-color: #2a2a4a;
+$border-radius-sm: 4px;
+$border-radius-md: 8px;
+$border-radius-lg: 12px;
+
+// Shadows
+$shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+$shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+$shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
+
+// Spacing
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+
+// Typography
+$font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+$font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+
+$font-size-xs: 10px;
+$font-size-sm: 12px;
+$font-size-md: 14px;
+$font-size-lg: 16px;
+$font-size-xl: 20px;
+$font-size-2xl: 24px;
+
+// Layout
+$sidebar-width: 280px;
+$sidebar-collapsed-width: 64px;
+$header-height: 48px;
+$panel-gap: $spacing-md;
+
+// Transitions
+$transition-fast: 150ms ease;
+$transition-normal: 250ms ease;
+$transition-slow: 350ms ease;
+
+// Z-index
+$z-dropdown: 100;
+$z-modal: 200;
+$z-tooltip: 300;

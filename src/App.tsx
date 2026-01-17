@@ -1,49 +1,59 @@
-import React from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { HomePage } from './pages/HomePage';
+import { SettingsPage } from './pages/SettingsPage';
+import { useSettingsStore } from './stores';
+import { scanTelemetryFolder } from './services/tauri';
+import './styles/global.scss';
 
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import i18n from './i18n';
-import { invoke } from '@tauri-apps/api/core';
+type Page = 'home' | 'settings';
 
-const languages = ['en', 'fr', 'es', 'ru'] as const;
-type AllLangType = (typeof languages)[number];
+function App() {
+  const [currentPage, setCurrentPage] = useState<Page>('home');
+  const {
+    initStore,
+    telemetryFolder,
+    setTelemetryFiles,
+    setScanning,
+    setScanError,
+  } = useSettingsStore();
 
-const App = () => {
-  const { t } = useTranslation();
-
-  const [appLang, setAppLang] = useState<AllLangType>('en');
-
+  // Initialize settings store on app start
   useEffect(() => {
-    i18n.changeLanguage(appLang);
-  }, [appLang]);
+    initStore();
+  }, [initStore]);
 
-  const handleAppLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const lang = e.currentTarget.value as AllLangType;
+  // Scan telemetry folder when it's loaded from settings
+  useEffect(() => {
+    if (telemetryFolder) {
+      setScanning(true);
+      setScanError(null);
+      scanTelemetryFolder(telemetryFolder)
+        .then((files) => {
+          setTelemetryFiles(files);
+        })
+        .catch((err) => {
+          setScanError(err instanceof Error ? err.message : String(err));
+          setTelemetryFiles([]);
+        })
+        .finally(() => {
+          setScanning(false);
+        });
+    }
+  }, [telemetryFolder, setTelemetryFiles, setScanning, setScanError]);
 
-    invoke<AllLangType>('get_lang_from_rust', { lang }).then((langFromRust) =>
-      setAppLang(langFromRust)
-    );
-  };
+  const handleOpenSettings = useCallback(() => {
+    setCurrentPage('settings');
+  }, []);
 
-  return (
-    <div>
-      <h1>{t('welcome')}!</h1>
+  const handleCloseSettings = useCallback(() => {
+    setCurrentPage('home');
+  }, []);
 
-      <label htmlFor="app-language-select">{t('changeLanguage')}:&nbsp;</label>
+  if (currentPage === 'settings') {
+    return <SettingsPage onClose={handleCloseSettings} />;
+  }
 
-      <select
-        id="app-language-select"
-        value={appLang}
-        onChange={handleAppLanguageChange}
-      >
-        {languages.map((lang) => (
-          <option key={lang} value={lang}>
-            {lang}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-};
+  return <HomePage onOpenSettings={handleOpenSettings} />;
+}
 
 export default App;

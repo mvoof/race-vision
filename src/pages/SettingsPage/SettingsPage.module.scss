@@ -1,0 +1,146 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.settingsPage {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: $bg-primary;
+}
+
+.header {
+  @include flex-between;
+  padding: $spacing-md $spacing-lg;
+  border-bottom: 1px solid $border-color;
+  background: $bg-secondary;
+}
+
+.title {
+  font-size: $font-size-xl;
+  font-weight: 600;
+  color: $text-primary;
+  margin: 0;
+}
+
+.closeButton {
+  @include button-base;
+  padding: $spacing-sm;
+  background: transparent;
+  color: $text-secondary;
+  border-radius: $border-radius-sm;
+
+  &:hover {
+    background: $bg-hover;
+    color: $text-primary;
+  }
+
+  .icon {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-xl;
+  max-width: 800px;
+}
+
+.section {
+  margin-bottom: $spacing-xl;
+  padding: $spacing-lg;
+  background: $bg-card;
+  border-radius: $border-radius-md;
+  border: 1px solid $border-color;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: 600;
+  color: $text-primary;
+  margin: 0 0 $spacing-sm 0;
+}
+
+.sectionDescription {
+  font-size: $font-size-md;
+  color: $text-secondary;
+  margin: 0 0 $spacing-md 0;
+}
+
+.folderSelector {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.folderPath {
+  padding: $spacing-md;
+  background: $bg-tertiary;
+  border-radius: $border-radius-sm;
+  border: 1px solid $border-color;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+}
+
+.path {
+  font-family: $font-mono;
+  font-size: $font-size-sm;
+  color: $text-primary;
+  word-break: break-all;
+}
+
+.noFolder {
+  color: $text-muted;
+  font-style: italic;
+}
+
+.folderActions {
+  display: flex;
+  gap: $spacing-sm;
+}
+
+.selectButton {
+  @include button-primary;
+  min-width: 150px;
+}
+
+.clearButton {
+  @include button-base;
+  padding: $spacing-sm $spacing-md;
+  background: $bg-tertiary;
+  color: $text-secondary;
+  border: 1px solid $border-color;
+
+  &:hover {
+    background: $bg-hover;
+    color: $text-primary;
+    border-color: $accent-danger;
+  }
+}
+
+.languageSelector {
+  display: flex;
+  gap: $spacing-sm;
+}
+
+.langButton {
+  @include button-base;
+  padding: $spacing-sm $spacing-md;
+  background: $bg-tertiary;
+  color: $text-secondary;
+  border: 1px solid $border-color;
+  min-width: 100px;
+
+  &:hover {
+    background: $bg-hover;
+    color: $text-primary;
+  }
+
+  &.active {
+    background: $accent-primary;
+    color: white;
+    border-color: $accent-primary;
+  }
+}

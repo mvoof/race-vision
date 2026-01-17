@@ -1,0 +1,15 @@
+@use '../../../styles/variables' as *;
+
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $bg-tertiary;
+  border-radius: $border-radius-md;
+  overflow: hidden;
+}
+
+.canvas {
+  display: block;
+  cursor: crosshair;
+}
