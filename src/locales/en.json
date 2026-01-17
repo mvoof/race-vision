@@ -55,6 +55,15 @@
     "noFilesInFolder": "No telemetry files in folder",
     "selectTelemetry": "Select Telemetry",
     "setupFolderHint": "Configure a telemetry folder for quick access to your files",
-    "openSettings": "Open Settings"
+    "openSettings": "Open Settings",
+    "backToFileList": "Back to file list",
+    "dateFormat": "Date Format",
+    "dateFormatDescription": "Choose how dates are displayed in the application.",
+    "dateFormatLocale": "System",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month",
+    "earlier": "Earlier"
   }
 }

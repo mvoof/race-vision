@@ -1,13 +1,16 @@
 import { create } from 'zustand';
 import { load, Store } from '@tauri-apps/plugin-store';
 import type { TelemetryFileInfo } from '../types';
+import type { DateFormat } from '../utils/dateFormat';
 
 const STORE_NAME = 'settings.json';
 const TELEMETRY_FOLDER_KEY = 'telemetryFolder';
+const DATE_FORMAT_KEY = 'dateFormat';
 
 interface SettingsState {
   // Settings
   telemetryFolder: string | null;
+  dateFormat: DateFormat;
 
   // File list from scanned folder
   telemetryFiles: TelemetryFileInfo[];
@@ -23,6 +26,7 @@ interface SettingsState {
   // Actions
   initStore: () => Promise<void>;
   setTelemetryFolder: (folder: string | null) => Promise<void>;
+  setDateFormat: (format: DateFormat) => Promise<void>;
   setTelemetryFiles: (files: TelemetryFileInfo[]) => void;
   setScanning: (isScanning: boolean) => void;
   setScanError: (error: string | null) => void;
@@ -32,6 +36,7 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   // Initial state
   telemetryFolder: null,
+  dateFormat: 'locale',
   telemetryFiles: [],
   isScanning: false,
   scanError: null,
@@ -43,9 +48,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     try {
       const store = await load(STORE_NAME);
       const savedFolder = await store.get<string>(TELEMETRY_FOLDER_KEY);
+      const savedDateFormat = await store.get<DateFormat>(DATE_FORMAT_KEY);
       set({
         _store: store,
         telemetryFolder: savedFolder || null,
+        dateFormat: savedDateFormat || 'locale',
       });
     } catch (error) {
       console.error('Failed to initialize settings store:', error);
@@ -72,6 +79,22 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
   },
 
+  // Set and persist the date format
+  setDateFormat: async (format: DateFormat) => {
+    const { _store } = get();
+
+    set({ dateFormat: format });
+
+    if (_store) {
+      try {
+        await _store.set(DATE_FORMAT_KEY, format);
+        await _store.save();
+      } catch (error) {
+        console.error('Failed to save date format:', error);
+      }
+    }
+  },
+
   setTelemetryFiles: (files) => set({ telemetryFiles: files }),
   setScanning: (isScanning) => set({ isScanning }),
   setScanError: (scanError) => set({ scanError }),
@@ -81,6 +104,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 // Selectors
 export const selectTelemetryFolder = (state: SettingsState) =>
   state.telemetryFolder;
+export const selectDateFormat = (state: SettingsState) => state.dateFormat;
 export const selectTelemetryFiles = (state: SettingsState) =>
   state.telemetryFiles;
 export const selectIsScanning = (state: SettingsState) => state.isScanning;

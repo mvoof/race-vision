@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../../stores';
 import { openFolderDialog, scanTelemetryFolder } from '../../services/tauri';
+import type { DateFormat } from '../../utils/dateFormat';
 import styles from './SettingsPage.module.scss';
 
 interface SettingsPageProps {
@@ -118,6 +119,14 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
           <h2 className={styles.sectionTitle}>{t('language')}</h2>
           <LanguageSelector />
         </section>
+
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>{t('dateFormat')}</h2>
+          <p className={styles.sectionDescription}>
+            {t('dateFormatDescription')}
+          </p>
+          <DateFormatSelector />
+        </section>
       </div>
     </div>
   );
@@ -153,6 +162,43 @@ function LanguageSelector() {
       ))}
     </div>
   );
+}
+
+function DateFormatSelector() {
+  const { t } = useTranslation();
+  const { dateFormat, setDateFormat } = useSettingsStore();
+
+  const formats: { code: DateFormat; label: string; example: string }[] = [
+    { code: 'locale', label: t('dateFormatLocale'), example: new Date().toLocaleDateString() },
+    { code: 'iso', label: 'ISO', example: new Date().toISOString().split('T')[0] },
+    { code: 'eu', label: 'EU', example: formatExampleDate('eu') },
+    { code: 'us', label: 'US', example: formatExampleDate('us') },
+  ];
+
+  return (
+    <div className={styles.dateFormatSelector}>
+      {formats.map((fmt) => (
+        <button
+          key={fmt.code}
+          className={`${styles.formatButton} ${dateFormat === fmt.code ? styles.active : ''}`}
+          onClick={() => setDateFormat(fmt.code)}
+        >
+          <span className={styles.formatLabel}>{fmt.label}</span>
+          <span className={styles.formatExample}>{fmt.example}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function formatExampleDate(format: 'eu' | 'us'): string {
+  const d = new Date();
+  const day = d.getDate().toString().padStart(2, '0');
+  const month = (d.getMonth() + 1).toString().padStart(2, '0');
+  const year = d.getFullYear();
+
+  if (format === 'eu') return `${day}.${month}.${year}`;
+  return `${month}/${day}/${year}`;
 }
 
 export default SettingsPage;

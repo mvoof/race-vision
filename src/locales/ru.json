@@ -55,6 +55,15 @@
     "noFilesInFolder": "В папке нет файлов телеметрии",
     "selectTelemetry": "Выберите телеметрию",
     "setupFolderHint": "Укажите папку с телеметрией для быстрого доступа к файлам",
-    "openSettings": "Открыть настройки"
+    "openSettings": "Открыть настройки",
+    "backToFileList": "Вернуться к списку файлов",
+    "dateFormat": "Формат даты",
+    "dateFormatDescription": "Выберите формат отображения даты в приложении.",
+    "dateFormatLocale": "Системный",
+    "today": "Сегодня",
+    "yesterday": "Вчера",
+    "thisWeek": "На этой неделе",
+    "thisMonth": "В этом месяце",
+    "earlier": "Ранее"
   }
 }
