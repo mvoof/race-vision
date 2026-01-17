@@ -10,6 +10,11 @@ import {
 import { TrackCanvas } from '../../components/track/TrackCanvas';
 import type { ColorMode } from '../../components/track/TrackCanvas';
 import type { TelemetryFileInfo } from '../../types';
+import {
+  formatDate,
+  getDatePeriod,
+  getFirstLetter,
+} from '../../utils/dateFormat';
 import styles from './HomePage.module.scss';
 
 interface HomePageProps {
@@ -44,7 +49,11 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
     isScanning,
     isDialogOpen,
     setDialogOpen,
+    dateFormat,
   } = useSettingsStore();
+
+  // Get reset function for back navigation
+  const reset = useSessionStore((state) => state.reset);
 
   // Local state - always called
   const [isDragOver, setIsDragOver] = useState(false);
@@ -114,6 +123,41 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
 
     return files;
   }, [telemetryFiles, searchQuery, sortBy]);
+
+  // Group files by category based on sort type
+  const groupedFiles = useMemo(() => {
+    const groups: { key: string; label: string; files: TelemetryFileInfo[] }[] =
+      [];
+    const groupMap = new Map<string, TelemetryFileInfo[]>();
+
+    filteredFiles.forEach((file) => {
+      let groupKey: string;
+
+      switch (sortBy) {
+        case 'name':
+          groupKey = getFirstLetter(file.fileName);
+          break;
+        case 'track':
+          groupKey = getFirstLetter(file.trackName || '');
+          break;
+        case 'date':
+        default:
+          groupKey = getDatePeriod(file.modifiedTime, t);
+          break;
+      }
+
+      if (!groupMap.has(groupKey)) {
+        groupMap.set(groupKey, []);
+      }
+      groupMap.get(groupKey)!.push(file);
+    });
+
+    groupMap.forEach((files, key) => {
+      groups.push({ key, label: key, files });
+    });
+
+    return groups;
+  }, [filteredFiles, sortBy, t]);
 
   const handleOpenFile = useCallback(async () => {
     // Prevent opening multiple dialogs
@@ -217,12 +261,29 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
     return (
       <div className={styles.analysisView}>
         <header className={styles.header}>
-          <div className={styles.sessionInfo}>
-            <h1 className={styles.trackName}>{session.trackName}</h1>
-            <span className={styles.sessionMeta}>
-              {session.carName} • {session.sessionType} • {laps.length}{' '}
-              {t('laps')}
-            </span>
+          <div className={styles.headerLeft}>
+            <button
+              className={styles.backButton}
+              onClick={reset}
+              title={t('backToFileList')}
+            >
+              <svg viewBox="0 0 24 24" fill="none" className={styles.icon}>
+                <path
+                  d="M19 12H5M5 12L12 19M5 12L12 5"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+            <div className={styles.sessionInfo}>
+              <h1 className={styles.trackName}>{session.trackName}</h1>
+              <span className={styles.sessionMeta}>
+                {session.carName} • {session.sessionType} • {laps.length}{' '}
+                {t('laps')}
+              </span>
+            </div>
           </div>
           <div className={styles.headerActions}>
             <button
@@ -271,7 +332,7 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
                     }
                   }}
                 >
-                  <span className={styles.lapNumber}>{lap.lapNumber}</span>
+                  <span className={styles.lapNumber}>{lap.lapNumber + 1}</span>
                   <span className={styles.lapTime}>
                     {lap.lapTime ? formatLapTime(lap.lapTime) : '--:--.---'}
                   </span>
@@ -326,7 +387,10 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
                   {selectedLap && (
                     <div className={styles.lapInfo}>
                       <span className={styles.lapInfoLabel}>
-                        {t('lap')} {selectedLapNumber}
+                        {t('lap')}{' '}
+                        {selectedLapNumber !== null
+                          ? selectedLapNumber + 1
+                          : ''}
                       </span>
                       {selectedLap.lapTime && (
                         <span className={styles.lapInfoTime}>
@@ -356,26 +420,6 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      {/* Settings button in corner */}
-      <button
-        className={styles.cornerSettingsButton}
-        onClick={onOpenSettings}
-        title={t('settings')}
-      >
-        <svg viewBox="0 0 24 24" fill="none" className={styles.icon}>
-          <path
-            d="M12 15a3 3 0 100-6 3 3 0 000 6z"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-          <path
-            d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-        </svg>
-      </button>
-
       {/* Show file list if folder is configured, otherwise show file open prompt */}
       {telemetryFolder ? (
         <div className={styles.fileListFullPage}>
@@ -400,6 +444,24 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
                 <option value="name">{t('sortByName')}</option>
                 <option value="track">{t('sortByTrack')}</option>
               </select>
+              <button
+                className={styles.settingsButton}
+                onClick={onOpenSettings}
+                title={t('settings')}
+              >
+                <svg viewBox="0 0 24 24" fill="none" className={styles.icon}>
+                  <path
+                    d="M12 15a3 3 0 100-6 3 3 0 000 6z"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  />
+                  <path
+                    d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  />
+                </svg>
+              </button>
             </div>
           </div>
 
@@ -410,35 +472,45 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
               <span className={styles.spinner} />
               {t('scanning')}
             </div>
-          ) : filteredFiles.length > 0 ? (
-            <div className={styles.fileListGrid}>
-              {filteredFiles.map((file) => (
-                <div
-                  key={file.path}
-                  role="button"
-                  tabIndex={isLoading ? -1 : 0}
-                  className={`${styles.fileCard} ${isLoading ? styles.disabled : ''}`}
-                  onClick={() => !isLoading && handleFileSelect(file)}
-                  onKeyDown={(e) => {
-                    if (!isLoading && (e.key === 'Enter' || e.key === ' ')) {
-                      e.preventDefault();
-                      handleFileSelect(file);
-                    }
-                  }}
-                >
-                  <div className={styles.fileCardTrack}>
-                    {file.trackName || t('unknownTrack')}
-                  </div>
-                  <div className={styles.fileCardMeta}>
-                    <span className={styles.fileCardCar}>
-                      {file.carName || t('unknownCar')}
-                    </span>
-                    <span className={styles.fileCardSession}>
-                      {file.sessionType || t('unknown')}
-                    </span>
-                  </div>
-                  <div className={styles.fileCardDate}>
-                    {new Date(file.modifiedTime * 1000).toLocaleDateString()}
+          ) : groupedFiles.length > 0 ? (
+            <div className={styles.fileListGrouped}>
+              {groupedFiles.map((group) => (
+                <div key={group.key} className={styles.fileGroup}>
+                  <h3 className={styles.groupHeader}>{group.label}</h3>
+                  <div className={styles.fileListGrid}>
+                    {group.files.map((file) => (
+                      <div
+                        key={file.path}
+                        role="button"
+                        tabIndex={isLoading ? -1 : 0}
+                        className={`${styles.fileCard} ${isLoading ? styles.disabled : ''}`}
+                        onClick={() => !isLoading && handleFileSelect(file)}
+                        onKeyDown={(e) => {
+                          if (
+                            !isLoading &&
+                            (e.key === 'Enter' || e.key === ' ')
+                          ) {
+                            e.preventDefault();
+                            handleFileSelect(file);
+                          }
+                        }}
+                      >
+                        <div className={styles.fileCardTrack}>
+                          {file.trackName || t('unknownTrack')}
+                        </div>
+                        <div className={styles.fileCardMeta}>
+                          <span className={styles.fileCardCar}>
+                            {file.carName || t('unknownCar')}
+                          </span>
+                          <span className={styles.fileCardSession}>
+                            {file.sessionType || t('unknown')}
+                          </span>
+                        </div>
+                        <div className={styles.fileCardDate}>
+                          {formatDate(file.modifiedTime, dateFormat)}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}

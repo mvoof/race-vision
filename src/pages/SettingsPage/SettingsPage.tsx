@@ -169,8 +169,16 @@ function DateFormatSelector() {
   const { dateFormat, setDateFormat } = useSettingsStore();
 
   const formats: { code: DateFormat; label: string; example: string }[] = [
-    { code: 'locale', label: t('dateFormatLocale'), example: new Date().toLocaleDateString() },
-    { code: 'iso', label: 'ISO', example: new Date().toISOString().split('T')[0] },
+    {
+      code: 'locale',
+      label: t('dateFormatLocale'),
+      example: new Date().toLocaleDateString(),
+    },
+    {
+      code: 'iso',
+      label: 'ISO',
+      example: new Date().toISOString().split('T')[0],
+    },
     { code: 'eu', label: 'EU', example: formatExampleDate('eu') },
     { code: 'us', label: 'US', example: formatExampleDate('us') },
   ];

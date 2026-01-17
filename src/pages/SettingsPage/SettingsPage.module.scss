@@ -144,3 +144,49 @@
     border-color: $accent-primary;
   }
 }
+
+.dateFormatSelector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.formatButton {
+  @include button-base;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: $spacing-sm $spacing-md;
+  background: $bg-tertiary;
+  color: $text-secondary;
+  border: 1px solid $border-color;
+  min-width: 120px;
+  text-align: left;
+
+  &:hover {
+    background: $bg-hover;
+    color: $text-primary;
+  }
+
+  &.active {
+    background: $accent-primary;
+    color: white;
+    border-color: $accent-primary;
+
+    .formatExample {
+      color: rgba(255, 255, 255, 0.8);
+    }
+  }
+}
+
+.formatLabel {
+  font-weight: 500;
+  font-size: $font-size-md;
+}
+
+.formatExample {
+  font-size: $font-size-sm;
+  color: $text-muted;
+  font-family: $font-mono;
+  margin-top: 2px;
+}

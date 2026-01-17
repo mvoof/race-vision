@@ -347,17 +347,19 @@
   }
 }
 
-// Corner settings button on welcome screen
-.cornerSettingsButton {
+// Header left section with back button and session info
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.backButton {
   @include button-base;
-  position: absolute;
-  top: $spacing-md;
-  right: $spacing-md;
   padding: $spacing-sm;
-  background: $bg-secondary;
+  background: transparent;
   color: $text-secondary;
   border-radius: $border-radius-sm;
-  border: 1px solid $border-color;
 
   &:hover {
     background: $bg-hover;
@@ -422,17 +424,36 @@
 }
 
 .sortSelect {
-  padding: $spacing-xs $spacing-sm;
+  appearance: none;
+  padding: $spacing-xs $spacing-xl $spacing-xs $spacing-sm;
   background: $bg-tertiary;
   border: 1px solid $border-color;
   border-radius: $border-radius-sm;
   color: $text-primary;
   font-size: $font-size-sm;
   cursor: pointer;
+  min-width: 140px;
+
+  // Custom dropdown arrow
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right $spacing-xs center;
+  background-size: 16px;
+
+  &:hover {
+    background-color: $bg-hover;
+    border-color: $text-muted;
+  }
 
   &:focus {
     outline: none;
     border-color: $accent-primary;
+  }
+
+  option {
+    background: $bg-secondary;
+    color: $text-primary;
+    padding: $spacing-xs $spacing-sm;
   }
 }
 
@@ -516,13 +537,34 @@
   color: $text-primary;
 }
 
+.fileListGrouped {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: $spacing-lg;
+  @include custom-scrollbar;
+}
+
+.fileGroup {
+  margin-bottom: $spacing-xl;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.groupHeader {
+  font-size: $font-size-lg;
+  font-weight: 600;
+  color: $text-secondary;
+  margin: 0 0 $spacing-md 0;
+  padding-bottom: $spacing-sm;
+  border-bottom: 1px solid $border-color;
+}
+
 .fileListGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: $spacing-md;
-  overflow-y: auto;
-  padding-bottom: $spacing-lg;
-  @include custom-scrollbar;
 }
 
 .fileCard {
