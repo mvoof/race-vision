@@ -52,6 +52,9 @@
     "unknownCar": "Unknown Car",
     "unknown": "Unknown",
     "noFilesMatch": "No files match your search",
-    "noFilesInFolder": "No telemetry files in folder"
+    "noFilesInFolder": "No telemetry files in folder",
+    "selectTelemetry": "Select Telemetry",
+    "setupFolderHint": "Configure a telemetry folder for quick access to your files",
+    "openSettings": "Open Settings"
   }
 }
