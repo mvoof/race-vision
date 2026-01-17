@@ -492,3 +492,125 @@
   color: $text-muted;
   font-size: $font-size-sm;
 }
+
+// Full page file list (when folder is configured)
+.fileListFullPage {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: $spacing-lg;
+  overflow: hidden;
+}
+
+.fileListFullPage .fileListHeader {
+  margin-bottom: $spacing-lg;
+  padding: 0;
+  border-bottom: none;
+}
+
+.fileListFullPage .fileListTitle {
+  font-size: $font-size-xl;
+  color: $text-primary;
+}
+
+.fileListGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: $spacing-md;
+  overflow-y: auto;
+  padding-bottom: $spacing-lg;
+  @include custom-scrollbar;
+}
+
+.fileCard {
+  @include card;
+  padding: $spacing-md;
+  cursor: pointer;
+  transition: all $transition-fast;
+  border: 2px solid transparent;
+
+  &:hover {
+    background: $bg-hover;
+    border-color: $accent-primary;
+    transform: translateY(-2px);
+  }
+
+  &.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+.fileCardTrack {
+  font-size: $font-size-lg;
+  font-weight: 600;
+  color: $text-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.fileCardMeta {
+  display: flex;
+  gap: $spacing-sm;
+  font-size: $font-size-sm;
+  color: $text-secondary;
+  margin-bottom: $spacing-sm;
+}
+
+.fileCardCar {
+  color: $text-secondary;
+}
+
+.fileCardSession {
+  color: $text-muted;
+
+  &::before {
+    content: '•';
+    margin-right: $spacing-sm;
+  }
+}
+
+.fileCardDate {
+  @include mono-numbers;
+  font-size: $font-size-sm;
+  color: $text-muted;
+}
+
+// Setup hint for configuring folder
+.setupHint {
+  margin-top: $spacing-xl;
+  padding: $spacing-md;
+  background: $bg-secondary;
+  border-radius: $border-radius-md;
+  border: 1px solid $border-color;
+  text-align: center;
+
+  p {
+    color: $text-secondary;
+    font-size: $font-size-sm;
+    margin-bottom: $spacing-sm;
+  }
+}
+
+.setupButton {
+  @include button-secondary;
+  font-size: $font-size-sm;
+  padding: $spacing-xs $spacing-md;
+}
+
+// Responsive track container
+.trackContainer {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+
+.trackPanel {
+  @include card;
+  padding: $spacing-lg;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
