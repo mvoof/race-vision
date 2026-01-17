@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useMemo } from 'react';
+import { useRef, useEffect, useCallback, useMemo, useState } from 'react';
 import type { TrajectoryPoint } from '../../../types';
 import styles from './TrackCanvas.module.scss';
 
@@ -6,8 +6,6 @@ export type ColorMode = 'speed' | 'throttle' | 'brake' | 'solid';
 
 interface TrackCanvasProps {
   trajectory: TrajectoryPoint[];
-  width?: number;
-  height?: number;
   colorMode?: ColorMode;
   trackColor?: string;
   backgroundColor?: string;
@@ -73,8 +71,6 @@ function smoothTrajectory(points: { x: number; y: number }[], iterations = 2): {
 
 export function TrackCanvas({
   trajectory,
-  width = 400,
-  height = 400,
   colorMode = 'speed',
   trackColor = '#4a90d9',
   backgroundColor = '#0f0f23',
@@ -86,6 +82,30 @@ export function TrackCanvas({
 }: TrackCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ width: 400, height: 400 });
+
+  // Observe container size changes
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          setSize({ width: Math.floor(width), height: Math.floor(height) });
+        }
+      }
+    });
+
+    resizeObserver.observe(container);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  const { width, height } = size;
 
   // Normalize coordinates to fit canvas with padding
   const normalizedData = useMemo(() => {

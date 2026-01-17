@@ -7,6 +7,9 @@
   background: $bg-tertiary;
   border-radius: $border-radius-md;
   overflow: hidden;
+  flex: 1;
+  width: 100%;
+  min-height: 300px;
 }
 
 .canvas {
