@@ -479,6 +479,16 @@ impl TelemetryParser for LmuParser {
         let lon_data = self.get_channel_data(&conn, "GPS Longitude")?;
         let dist_data = self.get_channel_data(&conn, "Lap Dist")?;
 
+        // Debug: проверяем данные GPS
+        println!("DEBUG load_trajectory: lat_data.len()={}, lon_data.len()={}, dist_data.len()={}",
+            lat_data.len(), lon_data.len(), dist_data.len());
+        if !lat_data.is_empty() {
+            println!("DEBUG GPS: first lat={}, first lon={}", lat_data[0], lon_data[0]);
+            if lat_data.len() > 100 {
+                println!("DEBUG GPS: lat[100]={}, lon[100]={}", lat_data[100], lon_data[100]);
+            }
+        }
+
         // 100 Hz скорость
         let speed_data = self.get_channel_data(&conn, "Ground Speed")?;
 

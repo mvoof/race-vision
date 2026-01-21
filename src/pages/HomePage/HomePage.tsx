@@ -7,8 +7,8 @@ import {
   getTrajectory,
   loadTelemetryFile,
 } from '../../services/tauri';
-import { TrackCanvas } from '../../components/track/TrackCanvas';
-import type { ColorMode } from '../../components/track/TrackCanvas';
+import { TrackSVG } from '../../components/track/TrackSVG';
+import type { ColorMode } from '../../components/track/TrackSVG';
 import type { TelemetryFileInfo } from '../../types';
 import {
   formatDate,
@@ -383,7 +383,11 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
                 </div>
               ) : trajectory.length > 0 ? (
                 <div className={styles.trackContainer}>
-                  <TrackCanvas trajectory={trajectory} colorMode={colorMode} />
+                  <TrackSVG
+                    trajectory={trajectory}
+                    colorMode={colorMode}
+                    showBoundaries={true}
+                  />
                   {selectedLap && (
                     <div className={styles.lapInfo}>
                       <span className={styles.lapInfoLabel}>

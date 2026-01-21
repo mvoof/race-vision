@@ -37,3 +37,13 @@ export {
   selectIsDialogOpen,
   type AutoScanInterval,
 } from './settingsStore';
+export {
+  useBoundaryStore,
+  selectComputedBoundary,
+  selectIsGenerating,
+  selectBoundaryError,
+  selectBoundarySettings,
+  selectBoundaryMode,
+  selectShowComputedBoundaries,
+  selectCollectedTrajectoryCount,
+} from './boundaryStore';
