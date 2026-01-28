@@ -1,0 +1,86 @@
+.container {
+  background: rgba(20, 20, 35, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 16px;
+  backdrop-filter: blur(10px);
+}
+
+.title {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.tire {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.tireLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+}
+
+.tireSvg {
+  width: 60px;
+  height: 100px;
+}
+
+.tireData {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.tireDataRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+}
+
+.tireDataLabel {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.tireDataValue {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+/* Compact mode */
+.compact {
+  padding: 12px;
+
+  .title {
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  .grid {
+    gap: 12px;
+  }
+
+  .tireSvg {
+    width: 48px;
+    height: 80px;
+  }
+
+  .tireLabel {
+    font-size: 10px;
+  }
+}

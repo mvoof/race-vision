@@ -1,0 +1,154 @@
+.container {
+  background: rgba(20, 20, 35, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 16px;
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.speed {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  justify-content: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.speedValue {
+  font-size: 48px;
+  font-weight: 700;
+  color: #00ff88;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.speedUnit {
+  font-size: 18px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.gear {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 0;
+}
+
+.gearValue {
+  font-size: 36px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  min-width: 40px;
+  text-align: center;
+}
+
+.gearLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+}
+
+.rpmGauge {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rpmLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+}
+
+.rpmBar {
+  height: 24px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rpmFill {
+  height: 100%;
+  transition: width 0.1s ease-out, background-color 0.2s ease;
+}
+
+.rpmValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.lapTime {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lapTimeLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+}
+
+.lapTimeValue {
+  font-size: 20px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* Compact mode */
+.compact {
+  padding: 12px;
+  gap: 8px;
+
+  .title {
+    font-size: 12px;
+  }
+
+  .speedValue {
+    font-size: 36px;
+  }
+
+  .speedUnit {
+    font-size: 14px;
+  }
+
+  .gearValue {
+    font-size: 28px;
+  }
+
+  .rpmBar {
+    height: 20px;
+  }
+
+  .lapTimeValue {
+    font-size: 16px;
+  }
+}

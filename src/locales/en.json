@@ -11,6 +11,8 @@
     "laps": "Laps",
     "trackMap": "Track Map",
     "selectLapToViewTrack": "Select a lap to view the track",
+    "selectLap": "Select a lap",
+    "hoverOverTrack": "Hover or click on track to view telemetry",
     "noTrajectoryData": "No trajectory data available",
     "lap": "Lap",
     "sector": "Sector",

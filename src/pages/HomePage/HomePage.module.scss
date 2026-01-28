@@ -144,18 +144,6 @@
   overflow: hidden;
 }
 
-.sidebar {
-  width: $sidebar-width;
-  background: $bg-secondary;
-  border-right: 1px solid $border-color;
-  overflow-y: auto;
-  @include custom-scrollbar;
-}
-
-.lapList {
-  padding: $spacing-md;
-}
-
 .sectionTitle {
   font-size: $font-size-sm;
   font-weight: 600;
@@ -165,70 +153,10 @@
   margin-bottom: $spacing-md;
 }
 
-.lapItem {
-  @include flex-between;
-  padding: $spacing-sm $spacing-md;
-  border-radius: $border-radius-sm;
-  cursor: pointer;
-  transition:
-    background $transition-fast,
-    border-color $transition-fast;
-  border: 2px solid transparent;
-
-  &:hover {
-    background: $bg-hover;
-  }
-
-  &.selected {
-    background: rgba($accent-primary, 0.15);
-    border-color: $accent-primary;
-  }
-
-  &.bestLap {
-    background: rgba($accent-success, 0.1);
-
-    .lapTime {
-      color: $accent-success;
-    }
-
-    &.selected {
-      background: rgba($accent-success, 0.2);
-      border-color: $accent-success;
-    }
-  }
-}
-
-.lapNumber {
-  @include mono-numbers;
-  font-size: $font-size-sm;
-  color: $text-muted;
-  min-width: 24px;
-}
-
-.lapTime {
-  @include mono-numbers;
-  font-size: $font-size-md;
-  color: $text-primary;
-}
-
-.delta {
-  @include mono-numbers;
-  font-size: $font-size-sm;
-
-  &.slower {
-    color: $accent-danger;
-  }
-
-  &.faster {
-    color: $accent-success;
-  }
-}
-
 .main {
   flex: 1;
-  padding: $spacing-lg;
-  overflow: auto;
-  @include custom-scrollbar;
+  display: flex;
+  overflow: hidden;
 }
 
 .trackPanel {
@@ -245,6 +173,45 @@
 .colorModeSelector {
   display: flex;
   gap: $spacing-xs;
+}
+
+.lapSelector {
+  appearance: none;
+  padding: $spacing-xs $spacing-xl $spacing-xs $spacing-md;
+  background: $bg-tertiary;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-sm;
+  color: $text-primary;
+  font-size: $font-size-md;
+  cursor: pointer;
+  min-width: 180px;
+
+  // Custom dropdown arrow
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right $spacing-sm center;
+  background-size: 16px;
+
+  &:hover {
+    background-color: $bg-hover;
+    border-color: $text-muted;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $accent-primary;
+  }
+
+  option {
+    background: $bg-secondary;
+    color: $text-primary;
+    padding: $spacing-xs $spacing-sm;
+
+    &.bestLap {
+      color: $accent-success;
+      font-weight: 600;
+    }
+  }
 }
 
 .colorModeBtn {
@@ -651,10 +618,54 @@
   min-height: 0;
 }
 
+// Main content with track and widgets side by side
+.mainContent {
+  display: flex;
+  gap: $spacing-lg;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  padding: $spacing-lg;
+}
+
 .trackPanel {
   @include card;
   padding: $spacing-lg;
   height: 100%;
   display: flex;
   flex-direction: column;
+  flex: 0 0 80%;
+  min-width: 0;
+}
+
+// Widgets panel
+.widgetsPanel {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  flex: 0 0 20%;
+  min-width: 250px;
+  max-width: 400px;
+  overflow-y: auto;
+  @include custom-scrollbar;
+  padding: $spacing-sm 0;
+}
+
+// Widget wrapper for drag-and-drop
+.widgetWrapper {
+  cursor: grab;
+  transition: transform $transition-fast, opacity $transition-fast;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &.dragging {
+    opacity: 0.5;
+    transform: scale(0.95);
+  }
+
+  &.dragOver {
+    transform: translateY(-4px);
+  }
 }

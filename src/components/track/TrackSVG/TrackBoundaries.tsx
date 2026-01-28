@@ -101,10 +101,10 @@ function pointsToPath(points: Point2D[]): string {
 export function TrackBoundaries({
   computedBoundary,
   svgPoints,
-  strokeColor = '#666666',
+  strokeColor = '#ffffff',
   strokeWidth = 1,
   opacity = 0.7,
-  style = 'dashed',
+  style = 'solid',
   offsetDistance = 8,
 }: TrackBoundariesProps) {
   // Generate boundaries: use computed (Frenet) if available, otherwise generate from svgPoints
@@ -125,11 +125,16 @@ export function TrackBoundaries({
         subsampled.push(svgPoints[i]);
       }
       // Always include last point
-      if (subsampled[subsampled.length - 1] !== svgPoints[svgPoints.length - 1]) {
+      if (
+        subsampled[subsampled.length - 1] !== svgPoints[svgPoints.length - 1]
+      ) {
         subsampled.push(svgPoints[svgPoints.length - 1]);
       }
 
-      const { left, right } = generateOffsetBoundaries(subsampled, offsetDistance);
+      const { left, right } = generateOffsetBoundaries(
+        subsampled,
+        offsetDistance
+      );
 
       return {
         left: pointsToPath(left),

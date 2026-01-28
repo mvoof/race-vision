@@ -59,8 +59,8 @@ export function TrackSVG({
   trackWidth = 4,
   showStartFinish = true,
   showBoundaries = true,
-  boundaryStyle = 'dashed',
-  boundaryColor = '#666666',
+  boundaryStyle = 'solid',
+  boundaryColor = '#ffffff',
   boundaryOpacity = 0.7,
   cursorDistance = null,
   onDistanceHover,
@@ -79,6 +79,7 @@ export function TrackSVG({
   } | null>(null);
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [isDraggingCursor, setIsDraggingCursor] = useState(false);
 
   // Use external or internal viewBox
   const viewBox = externalViewBox ?? internalViewBox;
@@ -151,33 +152,76 @@ export function TrackSVG({
     };
   }, [svgPoints]);
 
-  // Find point by distance
-  const findPointByDistance = useCallback(
-    (distance: number): { x: number; y: number } | null => {
-      for (let i = 0; i < svgPoints.length; i++) {
-        if (svgPoints[i].distance >= distance) {
-          return { x: svgPoints[i].x, y: svgPoints[i].y };
-        }
-      }
-      if (svgPoints.length > 0) {
-        const last = svgPoints[svgPoints.length - 1];
-        return { x: last.x, y: last.y };
-      }
-      return null;
-    },
-    [svgPoints]
-  );
-
-  // Cursor position
+  // Cursor position with heading
   const cursorPosition = useMemo(() => {
-    if (cursorDistance === null) return undefined;
-    return findPointByDistance(cursorDistance) ?? undefined;
-  }, [cursorDistance, findPointByDistance]);
+    if (cursorDistance === null || svgPoints.length < 2) return undefined;
 
-  // Start/finish position
+    // Find the point at cursor distance
+    let closestIdx = 0;
+    let minDiff = Infinity;
+
+    for (let i = 0; i < svgPoints.length; i++) {
+      const diff = Math.abs(svgPoints[i].distance - cursorDistance);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestIdx = i;
+      }
+    }
+
+    // Calculate heading from current to next point (or prev to current if at end)
+    const nextIdx =
+      closestIdx < svgPoints.length - 1 ? closestIdx + 1 : closestIdx;
+    const prevIdx = closestIdx > 0 ? closestIdx - 1 : closestIdx;
+
+    const dx =
+      nextIdx !== closestIdx
+        ? svgPoints[nextIdx].x - svgPoints[closestIdx].x
+        : svgPoints[closestIdx].x - svgPoints[prevIdx].x;
+    const dy =
+      nextIdx !== closestIdx
+        ? svgPoints[nextIdx].y - svgPoints[closestIdx].y
+        : svgPoints[closestIdx].y - svgPoints[prevIdx].y;
+
+    const heading = Math.atan2(dy, dx);
+
+    return {
+      x: svgPoints[closestIdx].x,
+      y: svgPoints[closestIdx].y,
+      heading,
+    };
+  }, [cursorDistance, svgPoints]);
+
+  // Start position with heading
   const startFinishPosition = useMemo(() => {
-    if (svgPoints.length === 0) return undefined;
-    return { x: svgPoints[0].x, y: svgPoints[0].y };
+    if (svgPoints.length < 2) return undefined;
+
+    // Calculate heading from first to second point
+    const dx = svgPoints[1].x - svgPoints[0].x;
+    const dy = svgPoints[1].y - svgPoints[0].y;
+    const heading = Math.atan2(dy, dx);
+
+    return {
+      x: svgPoints[0].x,
+      y: svgPoints[0].y,
+      heading,
+    };
+  }, [svgPoints]);
+
+  // Finish position with heading
+  const finishLinePosition = useMemo(() => {
+    if (svgPoints.length < 2) return undefined;
+
+    const lastIdx = svgPoints.length - 1;
+    // Calculate heading from second to last to last point
+    const dx = svgPoints[lastIdx].x - svgPoints[lastIdx - 1].x;
+    const dy = svgPoints[lastIdx].y - svgPoints[lastIdx - 1].y;
+    const heading = Math.atan2(dy, dx);
+
+    return {
+      x: svgPoints[lastIdx].x,
+      y: svgPoints[lastIdx].y,
+      heading,
+    };
   }, [svgPoints]);
 
   // Default viewBox
@@ -246,17 +290,38 @@ export function TrackSVG({
     [getSvgCoords, currentViewBox, width, height, setViewBox]
   );
 
-  // Handle mouse down for panning (left click)
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button === 0) {
-      // Left click for panning
-      e.preventDefault();
-      setIsPanning(true);
-      setPanStart({ x: e.clientX, y: e.clientY });
-    }
-  }, []);
+  // Handle mouse down for panning (left click) or cursor drag
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.button === 0) {
+        const coords = getSvgCoords(e);
 
-  // Handle mouse move for panning and hover
+        // Check if clicking near cursor position
+        if (cursorPosition && onDistanceHover) {
+          const dx = cursorPosition.x - coords.x;
+          const dy = cursorPosition.y - coords.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const threshold = 15 * (currentViewBox.width / width);
+
+          if (dist < threshold) {
+            // Start dragging cursor
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDraggingCursor(true);
+            return;
+          }
+        }
+
+        // Left click for panning
+        e.preventDefault();
+        setIsPanning(true);
+        setPanStart({ x: e.clientX, y: e.clientY });
+      }
+    },
+    [getSvgCoords, cursorPosition, onDistanceHover, currentViewBox, width]
+  );
+
+  // Handle mouse move for panning, cursor drag, and hover
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
       if (isPanning) {
@@ -279,13 +344,37 @@ export function TrackSVG({
         return;
       }
 
-      // Handle hover for distance
+      // Handle cursor dragging
+      if (isDraggingCursor && onDistanceHover) {
+        const coords = getSvgCoords(e);
+
+        if (svgPoints.length > 0) {
+          // Find closest point on track
+          let closestIdx = 0;
+          let closestDist = Infinity;
+
+          for (let i = 0; i < svgPoints.length; i++) {
+            const dx = svgPoints[i].x - coords.x;
+            const dy = svgPoints[i].y - coords.y;
+            const dist = dx * dx + dy * dy;
+            if (dist < closestDist) {
+              closestDist = dist;
+              closestIdx = i;
+            }
+          }
+
+          // Update cursor position
+          onDistanceHover(svgPoints[closestIdx].distance);
+        }
+        return;
+      }
+
+      // Handle hover for distance (when not dragging)
       if (!onDistanceHover) return;
 
       const coords = getSvgCoords(e);
 
       if (svgPoints.length === 0) {
-        onDistanceHover(null);
         return;
       }
 
@@ -303,16 +392,15 @@ export function TrackSVG({
         }
       }
 
-      // Scale threshold by zoom level
+      // Check if hovering near track
       const threshold = 20 * (currentViewBox.width / width);
       if (Math.sqrt(closestDist) < threshold) {
         onDistanceHover(svgPoints[closestIdx].distance);
-      } else {
-        onDistanceHover(null);
       }
     },
     [
       isPanning,
+      isDraggingCursor,
       panStart,
       currentViewBox,
       svgPoints,
@@ -326,15 +414,14 @@ export function TrackSVG({
   // Handle mouse up
   const handleMouseUp = useCallback(() => {
     setIsPanning(false);
+    setIsDraggingCursor(false);
   }, []);
 
   // Handle mouse leave
   const handleMouseLeave = useCallback(() => {
     setIsPanning(false);
-    if (onDistanceHover) {
-      onDistanceHover(null);
-    }
-  }, [onDistanceHover]);
+    setIsDraggingCursor(false);
+  }, []);
 
   // Prevent context menu
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
@@ -404,9 +491,11 @@ export function TrackSVG({
         {/* Markers (start/finish, cursor) */}
         <TrackMarkers
           startFinish={startFinishPosition}
+          finishLine={finishLinePosition}
           cursorPosition={cursorPosition}
           showStartFinish={showStartFinish}
           showCursor={cursorDistance !== null}
+          trackWidth={trackWidth * 5}
         />
       </svg>
 

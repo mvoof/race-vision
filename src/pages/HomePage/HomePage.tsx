@@ -6,10 +6,23 @@ import {
   openAndLoadTelemetryFile,
   getTrajectory,
   loadTelemetryFile,
+  getLapTelemetry,
 } from '../../services/tauri';
 import { TrackSVG } from '../../components/track/TrackSVG';
+import { TimelineSlider } from '../../components/track/TimelineSlider';
 import type { ColorMode } from '../../components/track/TrackSVG';
-import type { TelemetryFileInfo } from '../../types';
+import type {
+  TelemetryFileInfo,
+  TelemetrySample,
+  LapTelemetry,
+} from '../../types';
+import {
+  TireMonitor,
+  BrakeMonitor,
+  DigitalDashboard,
+  SteeringWheel,
+  PedalInputs,
+} from '../../components/widgets';
 import {
   formatDate,
   getDatePeriod,
@@ -60,37 +73,125 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
   const [colorMode, setColorMode] = useState<ColorMode>('speed');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'track'>('date');
+  const [cursorDistance, setCursorDistance] = useState<number | null>(null);
+  const [telemetrySample, setTelemetrySample] =
+    useState<TelemetrySample | null>(null);
+  const [lapTelemetry, setLapTelemetry] = useState<LapTelemetry | null>(null);
+  const [widgetOrder, setWidgetOrder] = useState<string[]>([
+    'dashboard',
+    'steering',
+    'pedals',
+    'tires',
+    'brakes',
+  ]);
 
-  // Load trajectory when lap is selected
+  // Load trajectory and telemetry when lap is selected
   useEffect(() => {
     if (selectedLapNumber === null) {
       setTrajectory([]);
+      setLapTelemetry(null);
+      setTelemetrySample(null);
+      setCursorDistance(null);
       return;
     }
 
     let cancelled = false;
 
-    async function loadTrajectory() {
+    async function loadData() {
       setLoadingTrajectory(true);
       try {
-        const data = await getTrajectory(selectedLapNumber!);
+        const [trajectoryData, telemetryData] = await Promise.all([
+          getTrajectory(selectedLapNumber!),
+          getLapTelemetry(selectedLapNumber!),
+        ]);
+
         if (!cancelled) {
-          setTrajectory(data);
+          setTrajectory(trajectoryData);
+          setLapTelemetry(telemetryData);
+          // Initialize cursor at start of lap
+          if (trajectoryData.length > 0) {
+            setCursorDistance(0);
+          }
         }
       } catch (err) {
-        console.error('Failed to load trajectory:', err);
+        console.error('Failed to load data:', err);
         if (!cancelled) {
           setTrajectory([]);
+          setLapTelemetry(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingTrajectory(false);
         }
       }
     }
 
-    loadTrajectory();
+    loadData();
 
     return () => {
       cancelled = true;
     };
   }, [selectedLapNumber, setTrajectory, setLoadingTrajectory]);
+
+  // Find telemetry sample by distance
+  useEffect(() => {
+    if (cursorDistance === null || !lapTelemetry) {
+      setTelemetrySample(null);
+      return;
+    }
+
+    // Find closest sample by lapDistance
+    let closestSample: TelemetrySample | null = null;
+    let minDiff = Infinity;
+
+    for (const sample of lapTelemetry.samples) {
+      const diff = Math.abs(sample.lapDistance - cursorDistance);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestSample = sample;
+      }
+    }
+
+    setTelemetrySample(closestSample);
+  }, [cursorDistance, lapTelemetry]);
+
+  // Handle widget drag and drop
+  const handleWidgetDragStart = useCallback(
+    (e: React.DragEvent, widgetId: string) => {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', widgetId);
+    },
+    []
+  );
+
+  const handleWidgetDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  const handleWidgetDrop = useCallback(
+    (e: React.DragEvent, targetWidgetId: string) => {
+      e.preventDefault();
+      const sourceWidgetId = e.dataTransfer.getData('text/plain');
+
+      if (sourceWidgetId === targetWidgetId) return;
+
+      setWidgetOrder((prevOrder) => {
+        const newOrder = [...prevOrder];
+        const sourceIndex = newOrder.indexOf(sourceWidgetId);
+        const targetIndex = newOrder.indexOf(targetWidgetId);
+
+        if (sourceIndex === -1 || targetIndex === -1) return prevOrder;
+
+        // Swap widgets
+        newOrder.splice(sourceIndex, 1);
+        newOrder.splice(targetIndex, 0, sourceWidgetId);
+
+        return newOrder;
+      });
+    },
+    []
+  );
 
   // Filtered and sorted files
   const filteredFiles = useMemo(() => {
@@ -254,6 +355,65 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
     // TODO: Handle file drop when Tauri supports it
   }, []);
 
+  // Render widget by ID
+  const renderWidget = useCallback(
+    (widgetId: string, sample: TelemetrySample | null) => {
+      if (!sample) {
+        return (
+          <div style={{ padding: '1rem', textAlign: 'center', color: '#888' }}>
+            {t('hoverOverTrack')}
+          </div>
+        );
+      }
+
+      switch (widgetId) {
+        case 'dashboard':
+          return (
+            <DigitalDashboard
+              speed={sample.speed}
+              rpm={sample.rpm}
+              gear={sample.gear}
+              lapTime={sample.timestamp}
+              compact={false}
+            />
+          );
+        case 'steering':
+          return (
+            <SteeringWheel
+              steering={sample.steering}
+              maxAngle={540}
+              compact={false}
+            />
+          );
+        case 'pedals':
+          return (
+            <PedalInputs
+              throttle={sample.throttle}
+              brake={sample.brake}
+              clutch={sample.clutch}
+              compact={false}
+            />
+          );
+        case 'tires':
+          return (
+            <TireMonitor
+              tireTempLeft={sample.tireTempLeft}
+              tireTempCenter={sample.tireTempCenter}
+              tireTempRight={sample.tireTempRight}
+              tirePressure={sample.tirePressure}
+              tireWear={sample.tireWear}
+              compact={false}
+            />
+          );
+        case 'brakes':
+          return <BrakeMonitor brakeTemp={sample.brakeTemp} compact={false} />;
+        default:
+          return null;
+      }
+    },
+    [t]
+  );
+
   // If session is loaded, show the analysis view
   if (session) {
     const selectedLap = laps.find((l) => l.lapNumber === selectedLapNumber);
@@ -315,102 +475,122 @@ export function HomePage({ onOpenSettings }: HomePageProps) {
         </header>
 
         <div className={styles.content}>
-          <aside className={styles.sidebar}>
-            <div className={styles.lapList}>
-              <h2 className={styles.sectionTitle}>{t('laps')}</h2>
-              {laps.map((lap) => (
-                <div
-                  key={lap.id}
-                  role="button"
-                  tabIndex={0}
-                  className={`${styles.lapItem} ${lap.isPersonalBest ? styles.bestLap : ''} ${selectedLapNumber === lap.lapNumber ? styles.selected : ''}`}
-                  onClick={() => handleLapClick(lap.lapNumber)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleLapClick(lap.lapNumber);
-                    }
-                  }}
-                >
-                  <span className={styles.lapNumber}>{lap.lapNumber + 1}</span>
-                  <span className={styles.lapTime}>
-                    {lap.lapTime ? formatLapTime(lap.lapTime) : '--:--.---'}
-                  </span>
-                  {lap.deltaToSessionBest !== null &&
-                    lap.deltaToSessionBest !== 0 && (
-                      <span
-                        className={`${styles.delta} ${lap.deltaToSessionBest > 0 ? styles.slower : styles.faster}`}
-                      >
-                        {lap.deltaToSessionBest > 0 ? '+' : ''}
-                        {lap.deltaToSessionBest.toFixed(3)}
-                      </span>
-                    )}
-                </div>
-              ))}
-            </div>
-          </aside>
-
           <main className={styles.main}>
-            <div className={styles.trackPanel}>
-              <div className={styles.trackHeader}>
-                <h2 className={styles.sectionTitle}>{t('trackMap')}</h2>
-                {selectedLapNumber !== null && (
-                  <div className={styles.colorModeSelector}>
-                    <button
-                      className={`${styles.colorModeBtn} ${colorMode === 'speed' ? styles.active : ''}`}
-                      onClick={() => setColorMode('speed')}
-                    >
-                      {t('speed')}
-                    </button>
-                    <button
-                      className={`${styles.colorModeBtn} ${colorMode === 'throttle' ? styles.active : ''}`}
-                      onClick={() => setColorMode('throttle')}
-                    >
-                      {t('throttle')}/{t('brake')}
-                    </button>
+            <div className={styles.mainContent}>
+              <div className={styles.trackPanel}>
+                <div className={styles.trackHeader}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '1rem',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <h2 className={styles.sectionTitle}>{t('trackMap')}</h2>
+                    {laps.length > 0 && (
+                      <select
+                        className={styles.lapSelector}
+                        value={selectedLapNumber ?? ''}
+                        onChange={(e) => {
+                          const lapNum = e.target.value
+                            ? parseInt(e.target.value, 10)
+                            : null;
+                          setSelectedLap(lapNum);
+                        }}
+                      >
+                        <option value="">{t('selectLap')}</option>
+                        {laps.map((lap) => (
+                          <option
+                            key={lap.id}
+                            value={lap.lapNumber}
+                            className={lap.isPersonalBest ? styles.bestLap : ''}
+                          >
+                            {t('lap')} {lap.lapNumber + 1}
+                            {lap.lapTime
+                              ? ` - ${formatLapTime(lap.lapTime)}`
+                              : ''}
+                            {lap.isPersonalBest ? ' ⭐' : ''}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                  {selectedLapNumber !== null && (
+                    <div className={styles.colorModeSelector}>
+                      <button
+                        className={`${styles.colorModeBtn} ${colorMode === 'speed' ? styles.active : ''}`}
+                        onClick={() => setColorMode('speed')}
+                      >
+                        {t('speed')}
+                      </button>
+                      <button
+                        className={`${styles.colorModeBtn} ${colorMode === 'throttle' ? styles.active : ''}`}
+                        onClick={() => setColorMode('throttle')}
+                      >
+                        {t('throttle')}/{t('brake')}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {selectedLapNumber === null ? (
+                  <div className={styles.trackPlaceholder}>
+                    {t('selectLapToViewTrack')}
+                  </div>
+                ) : isLoadingTrajectory ? (
+                  <div className={styles.trackPlaceholder}>
+                    <span className={styles.spinner} />
+                    {t('loading')}
+                  </div>
+                ) : trajectory.length > 0 ? (
+                  <div className={styles.trackContainer}>
+                    <TrackSVG
+                      trajectory={trajectory}
+                      colorMode={colorMode}
+                      showBoundaries={true}
+                      cursorDistance={cursorDistance}
+                      onDistanceHover={setCursorDistance}
+                    />
+                  </div>
+                ) : (
+                  <div className={styles.trackPlaceholder}>
+                    {t('noTrajectoryData')}
                   </div>
                 )}
               </div>
 
-              {selectedLapNumber === null ? (
-                <div className={styles.trackPlaceholder}>
-                  {t('selectLapToViewTrack')}
-                </div>
-              ) : isLoadingTrajectory ? (
-                <div className={styles.trackPlaceholder}>
-                  <span className={styles.spinner} />
-                  {t('loading')}
-                </div>
-              ) : trajectory.length > 0 ? (
-                <div className={styles.trackContainer}>
-                  <TrackSVG
-                    trajectory={trajectory}
-                    colorMode={colorMode}
-                    showBoundaries={true}
-                  />
-                  {selectedLap && (
-                    <div className={styles.lapInfo}>
-                      <span className={styles.lapInfoLabel}>
-                        {t('lap')}{' '}
-                        {selectedLapNumber !== null
-                          ? selectedLapNumber + 1
-                          : ''}
-                      </span>
-                      {selectedLap.lapTime && (
-                        <span className={styles.lapInfoTime}>
-                          {formatLapTime(selectedLap.lapTime)}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className={styles.trackPlaceholder}>
-                  {t('noTrajectoryData')}
-                </div>
+              {/* Timeline Slider */}
+              {selectedLapNumber !== null && trajectory.length > 0 && (
+                <TimelineSlider
+                  currentLap={selectedLap ?? null}
+                  currentDistance={cursorDistance ?? 0}
+                  maxDistance={trajectory[trajectory.length - 1]?.distance ?? 0}
+                  onDistanceChange={setCursorDistance}
+                />
               )}
             </div>
-          </main>
+
+            {/* Telemetry Widgets - Always visible when lap is loaded */}
+            {selectedLapNumber !== null && lapTelemetry && (
+              <aside className={styles.widgetsPanel}>
+                {widgetOrder.map((widgetId) => {
+                  const widget = renderWidget(widgetId, telemetrySample);
+                  return (
+                    <div
+                      key={widgetId}
+                      className={styles.widgetWrapper}
+                      draggable
+                      onDragStart={(e) => handleWidgetDragStart(e, widgetId)}
+                      onDragOver={handleWidgetDragOver}
+                      onDrop={(e) => handleWidgetDrop(e, widgetId)}
+                    >
+                      {widget}
+                    </div>
+                  );
+                })}
+              </aside>
+            )}
+          </main>{' '}
         </div>
       </div>
     );

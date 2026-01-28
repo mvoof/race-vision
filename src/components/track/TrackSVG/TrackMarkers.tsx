@@ -3,58 +3,88 @@ interface Point {
   y: number;
 }
 
+interface PointWithHeading extends Point {
+  heading?: number; // Direction angle in radians
+}
+
 interface TrackMarkersProps {
-  startFinish?: Point;
-  cursorPosition?: Point;
+  startFinish?: PointWithHeading;
+  finishLine?: PointWithHeading;
+  cursorPosition?: PointWithHeading; // Changed to include heading for car direction
   showStartFinish?: boolean;
   showCursor?: boolean;
+  trackWidth?: number; // Width of the track for start/finish line
 }
 
 export function TrackMarkers({
   startFinish,
+  finishLine,
   cursorPosition,
   showStartFinish = true,
   showCursor = true,
+  trackWidth = 20,
 }: TrackMarkersProps) {
+  // Calculate line endpoints perpendicular to heading
+  const getLineEndpoints = (
+    point: PointWithHeading
+  ): { x1: number; y1: number; x2: number; y2: number } | null => {
+    if (!point.heading && point.heading !== 0) {
+      // No heading available, return null
+      return null;
+    }
+
+    // Calculate perpendicular direction (90 degrees to heading)
+    const perpAngle = point.heading + Math.PI / 2;
+    const halfWidth = trackWidth / 2;
+
+    return {
+      x1: point.x - Math.cos(perpAngle) * halfWidth,
+      y1: point.y - Math.sin(perpAngle) * halfWidth,
+      x2: point.x + Math.cos(perpAngle) * halfWidth,
+      y2: point.y + Math.sin(perpAngle) * halfWidth,
+    };
+  };
+
+  const startLine = startFinish ? getLineEndpoints(startFinish) : null;
+  const finishLineCoords = finishLine ? getLineEndpoints(finishLine) : null;
+
   return (
     <g className="track-markers">
-      {/* Start/Finish marker */}
-      {showStartFinish && startFinish && (
-        <g className="start-finish-marker">
-          <circle
-            cx={startFinish.x}
-            cy={startFinish.y}
-            r={8}
-            fill="#ffffff"
-            stroke="#000000"
-            strokeWidth={2}
-          />
-          {/* Checkered flag pattern */}
-          <circle cx={startFinish.x} cy={startFinish.y} r={4} fill="#000000" />
-        </g>
+      {/* Start line (green) */}
+      {showStartFinish && startLine && (
+        <line
+          x1={startLine.x1}
+          y1={startLine.y1}
+          x2={startLine.x2}
+          y2={startLine.y2}
+          stroke="#00ff00"
+          strokeWidth={2}
+          strokeLinecap="round"
+        />
       )}
 
-      {/* Cursor position marker */}
+      {/* Finish line (red) */}
+      {showStartFinish && finishLineCoords && (
+        <line
+          x1={finishLineCoords.x1}
+          y1={finishLineCoords.y1}
+          x2={finishLineCoords.x2}
+          y2={finishLineCoords.y2}
+          stroke="#ff0000"
+          strokeWidth={2}
+          strokeLinecap="round"
+        />
+      )}
+
+      {/* Cursor position marker - Circle */}
       {showCursor && cursorPosition && (
-        <g className="cursor-marker">
+        <g className="cursor-marker" style={{ cursor: 'grab' }}>
+          {/* Main circle marker */}
           <circle
             cx={cursorPosition.x}
             cy={cursorPosition.y}
             r={8}
             fill="#ff9800"
-            stroke="#ffffff"
-            strokeWidth={2}
-          />
-          {/* Pulsing effect via CSS animation */}
-          <circle
-            cx={cursorPosition.x}
-            cy={cursorPosition.y}
-            r={12}
-            fill="none"
-            stroke="#ff9800"
-            strokeWidth={2}
-            opacity={0.5}
-            className="cursor-pulse"
           />
         </g>
       )}
