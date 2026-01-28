@@ -14,6 +14,7 @@ interface TrackMarkersProps {
   showStartFinish?: boolean;
   showCursor?: boolean;
   trackWidth?: number; // Width of the track for start/finish line
+  isDragging?: boolean; // Whether cursor is being dragged
 }
 
 export function TrackMarkers({
@@ -23,6 +24,7 @@ export function TrackMarkers({
   showStartFinish = true,
   showCursor = true,
   trackWidth = 20,
+  isDragging = false,
 }: TrackMarkersProps) {
   // Calculate line endpoints perpendicular to heading
   const getLineEndpoints = (
@@ -76,16 +78,45 @@ export function TrackMarkers({
         />
       )}
 
-      {/* Cursor position marker - Circle */}
+      {/* Cursor position marker - Car Icon with grab cursor */}
       {showCursor && cursorPosition && (
-        <g className="cursor-marker" style={{ cursor: 'grab' }}>
+        <g
+          className="cursor-marker"
+          style={{
+            cursor: isDragging ? 'grabbing' : 'grab',
+            pointerEvents: 'all',
+          }}
+        >
+          {/* Glow effect */}
+          <circle
+            cx={cursorPosition.x}
+            cy={cursorPosition.y}
+            r={12}
+            fill="rgba(255, 152, 0, 0.2)"
+            stroke="rgba(255, 152, 0, 0.4)"
+            strokeWidth={2}
+          />
           {/* Main circle marker */}
           <circle
             cx={cursorPosition.x}
             cy={cursorPosition.y}
             r={8}
             fill="#ff9800"
+            stroke="#fff"
+            strokeWidth={2}
           />
+          {/* Direction indicator */}
+          {cursorPosition.heading !== undefined && (
+            <line
+              x1={cursorPosition.x}
+              y1={cursorPosition.y}
+              x2={cursorPosition.x + Math.cos(cursorPosition.heading) * 15}
+              y2={cursorPosition.y + Math.sin(cursorPosition.heading) * 15}
+              stroke="#fff"
+              strokeWidth={2}
+              strokeLinecap="round"
+            />
+          )}
         </g>
       )}
     </g>
