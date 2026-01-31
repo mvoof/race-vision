@@ -14,7 +14,7 @@ function Pedal({
   label,
   value,
   color,
-  compact,
+  compact: _compact,
 }: {
   label: string;
   value: number;

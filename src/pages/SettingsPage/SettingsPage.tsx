@@ -1,8 +1,16 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  X,
+  Folder,
+  Globe,
+  Calendar as CalendarIcon,
+  RefreshCw,
+} from 'lucide-react';
 import { useSettingsStore, type AutoScanInterval } from '../../stores';
 import { openFolderDialog, scanTelemetryFolder } from '../../services/tauri';
 import type { DateFormat } from '../../utils/dateFormat';
+import { Button, Panel } from '../../components/common';
 import styles from './SettingsPage.module.scss';
 
 interface SettingsPageProps {
@@ -22,19 +30,13 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
   } = useSettingsStore();
 
   const handleSelectFolder = useCallback(async () => {
-    // Prevent multiple dialogs
-    if (isDialogOpen) {
-      return;
-    }
+    if (isDialogOpen) return;
 
     setDialogOpen(true);
-
     try {
       const folder = await openFolderDialog();
       if (folder) {
         await setTelemetryFolder(folder);
-
-        // Scan the folder for telemetry files
         setScanning(true);
         setScanError(null);
         try {
@@ -67,74 +69,93 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
   return (
     <div className={styles.settingsPage}>
       <header className={styles.header}>
-        <h1 className={styles.title}>{t('settings')}</h1>
-        <button className={styles.closeButton} onClick={onClose}>
-          <svg viewBox="0 0 24 24" fill="none" className={styles.icon}>
-            <path
-              d="M18 6L6 18M6 6l12 12"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
+        <div className={styles.headerLeft}>
+          <h1 className={styles.title}>{t('settings')}</h1>
+        </div>
+        <Button
+          variant="ghost"
+          icon={<X size={20} />}
+          onClick={onClose}
+          aria-label="Close settings"
+        />
       </header>
 
       <div className={styles.content}>
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>{t('telemetryFolder')}</h2>
-          <p className={styles.sectionDescription}>
-            {t('telemetryFolderDescription')}
-          </p>
+        <div className={styles.settingsGrid}>
+          <Panel
+            title={t('telemetryFolder')}
+            icon={<Folder size={16} />}
+            className={styles.section}
+          >
+            <div className={styles.sectionBody}>
+              <p className={styles.sectionDescription}>
+                {t('telemetryFolderDescription')}
+              </p>
 
-          <div className={styles.folderSelector}>
-            <div className={styles.folderPath}>
-              {telemetryFolder ? (
-                <span className={styles.path}>{telemetryFolder}</span>
-              ) : (
-                <span className={styles.noFolder}>{t('noFolderSelected')}</span>
-              )}
+              <div className={styles.folderSelector}>
+                <div className={styles.folderPath}>
+                  {telemetryFolder ? (
+                    <span className={styles.path}>{telemetryFolder}</span>
+                  ) : (
+                    <span className={styles.noFolder}>
+                      {t('noFolderSelected')}
+                    </span>
+                  )}
+                </div>
+                <div className={styles.folderActions}>
+                  <Button
+                    variant="primary"
+                    onClick={handleSelectFolder}
+                    disabled={isDialogOpen}
+                  >
+                    {isDialogOpen ? t('loading') : t('selectFolder')}
+                  </Button>
+                  {telemetryFolder && (
+                    <Button variant="outline" onClick={handleClearFolder}>
+                      {t('clear')}
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className={styles.folderActions}>
-              <button
-                className={styles.selectButton}
-                onClick={handleSelectFolder}
-                disabled={isDialogOpen}
-              >
-                {isDialogOpen ? t('loading') : t('selectFolder')}
-              </button>
-              {telemetryFolder && (
-                <button
-                  className={styles.clearButton}
-                  onClick={handleClearFolder}
-                >
-                  {t('clear')}
-                </button>
-              )}
+          </Panel>
+
+          <Panel
+            title={t('autoScan')}
+            icon={<RefreshCw size={16} />}
+            className={styles.section}
+          >
+            <div className={styles.sectionBody}>
+              <p className={styles.sectionDescription}>
+                {t('autoScanDescription')}
+              </p>
+              <AutoScanSelector />
             </div>
-          </div>
-        </section>
+          </Panel>
 
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>{t('autoScan')}</h2>
-          <p className={styles.sectionDescription}>
-            {t('autoScanDescription')}
-          </p>
-          <AutoScanSelector />
-        </section>
+          <Panel
+            title={t('language')}
+            icon={<Globe size={16} />}
+            className={styles.section}
+          >
+            <div className={styles.sectionBody}>
+              <LanguageSelector />
+            </div>
+          </Panel>
 
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>{t('language')}</h2>
-          <LanguageSelector />
-        </section>
-
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>{t('dateFormat')}</h2>
-          <p className={styles.sectionDescription}>
-            {t('dateFormatDescription')}
-          </p>
-          <DateFormatSelector />
-        </section>
+          <Panel
+            title={t('dateFormat')}
+            icon={<CalendarIcon size={16} />}
+            className={styles.section}
+          >
+            <div className={styles.sectionBody}>
+              <p className={styles.sectionDescription}>
+                {t('dateFormatDescription')}
+              </p>
+              <DateFormatSelector />
+            </div>
+          </Panel>
+        </div>
       </div>
     </div>
   );
@@ -160,13 +181,14 @@ function LanguageSelector() {
   return (
     <div className={styles.languageSelector}>
       {languages.map((lang) => (
-        <button
+        <Button
           key={lang.code}
-          className={`${styles.langButton} ${currentLang === lang.code ? styles.active : ''}`}
+          variant={currentLang === lang.code ? 'primary' : 'secondary'}
           onClick={() => handleLanguageChange(lang.code)}
+          className={styles.langButton}
         >
           {lang.label}
-        </button>
+        </Button>
       ))}
     </div>
   );
@@ -194,14 +216,17 @@ function DateFormatSelector() {
   return (
     <div className={styles.dateFormatSelector}>
       {formats.map((fmt) => (
-        <button
+        <Button
           key={fmt.code}
-          className={`${styles.formatButton} ${dateFormat === fmt.code ? styles.active : ''}`}
+          variant={dateFormat === fmt.code ? 'primary' : 'secondary'}
           onClick={() => setDateFormat(fmt.code)}
+          className={styles.formatButton}
         >
-          <span className={styles.formatLabel}>{fmt.label}</span>
-          <span className={styles.formatExample}>{fmt.example}</span>
-        </button>
+          <div className={styles.formatButtonContent}>
+            <span className={styles.formatLabel}>{fmt.label}</span>
+            <span className={styles.formatExample}>{fmt.example}</span>
+          </div>
+        </Button>
       ))}
     </div>
   );
@@ -261,15 +286,18 @@ function AutoScanSelector() {
         className={`${styles.intervalSelector} ${!autoScanEnabled ? styles.disabled : ''}`}
       >
         {intervals.map((interval) => (
-          <button
+          <Button
             key={interval.value}
-            type="button"
-            className={`${styles.intervalButton} ${autoScanInterval === interval.value ? styles.active : ''}`}
+            variant={
+              autoScanInterval === interval.value ? 'primary' : 'secondary'
+            }
             onClick={() => handleIntervalChange(interval.value)}
             disabled={!autoScanEnabled}
+            className={styles.intervalButton}
+            size="small"
           >
             {interval.label}
-          </button>
+          </Button>
         ))}
       </div>
     </div>

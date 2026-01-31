@@ -1,0 +1,148 @@
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+.sidebar {
+  width: $sidebar-width;
+  height: 100vh;
+  background: $bg-secondary;
+  border-right: 1px solid $border-color;
+  display: flex;
+  flex-direction: column;
+  transition: width $transition-normal;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+
+  &.collapsed {
+    width: $sidebar-collapsed-width;
+
+    .navLabel {
+      display: none;
+    }
+
+    .logoText {
+      display: none;
+    }
+
+    .logo {
+      justify-content: center;
+      padding: $spacing-md 0;
+    }
+
+    .navItem {
+      justify-content: center;
+      padding: $spacing-md 0;
+    }
+  }
+}
+
+.logo {
+  padding: $spacing-lg;
+  border-bottom: 1px solid $border-color;
+  background: $bg-secondary;
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  min-height: 60px; // Standard height
+  flex-shrink: 0;
+  color: $accent-primary;
+}
+
+.logoIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  // Rotating animation for fun, but subtle
+  // transition: transform $transition-normal;
+}
+
+.logoText {
+  font-family: $font-mono;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  margin: 0;
+  color: $text-primary;
+  letter-spacing: -0.5px;
+}
+
+.nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: $spacing-sm 0;
+  gap: 2px; // Tight stacking
+  overflow-y: auto;
+  @include custom-scrollbar;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md $spacing-lg;
+  color: $text-secondary;
+  background: transparent;
+  border: none;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  transition: all $transition-fast;
+  text-align: left;
+  width: 100%;
+  font-family: $font-family;
+
+  &:hover {
+    background: $bg-tertiary;
+    color: $text-primary;
+  }
+
+  &.active {
+    background: $bg-tertiary;
+    border-left-color: $accent-primary;
+    color: $accent-primary;
+
+    .navIcon {
+      color: $accent-primary;
+    }
+  }
+}
+
+.navIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: $text-muted;
+  transition: color $transition-fast;
+
+  svg {
+    display: block;
+  }
+}
+
+.navLabel {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.collapseButton {
+  @include flex-center;
+  height: 48px;
+  border: none;
+  border-top: 1px solid $border-color;
+  background: $bg-secondary;
+  color: $text-secondary;
+  cursor: pointer;
+  transition: all $transition-fast;
+  flex-shrink: 0;
+
+  &:hover {
+    background: $bg-tertiary;
+    color: $text-primary;
+  }
+}

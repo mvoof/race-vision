@@ -252,3 +252,93 @@ export const DEFAULT_BOUNDARY_SETTINGS: BoundarySettings = {
   boundaryColor: '#666666',
   boundaryStyle: 'dashed',
 };
+
+// ============================================
+// Track Boundary Envelope (from all telemetries)
+// ============================================
+
+/**
+ * Точка границы трека из всех телеметрий
+ */
+export interface TrackBoundaryPoint {
+  /** Дистанция вдоль трека */
+  distance: number;
+  /** Минимальные координаты (самая внутренняя точка) */
+  minX: number;
+  minY: number;
+  /** Максимальные координаты (самая внешняя точка) */
+  maxX: number;
+  maxY: number;
+  /** Центральная линия (среднее всех траекторий) */
+  centerX: number;
+  centerY: number;
+  /** Количество проходов через эту точку */
+  sampleCount: number;
+}
+
+/**
+ * Envelope границ трека на основе всех телеметрий из папки
+ */
+export interface TrackBoundaryEnvelope {
+  /** Имя трека */
+  trackName: string;
+  /** Общая длина трека */
+  trackLength: number;
+  /** Точки границ */
+  points: TrackBoundaryPoint[];
+  /** Количество проанализированных кругов */
+  totalLaps: number;
+  /** Количество проанализированных файлов */
+  totalFiles: number;
+}
+
+/**
+ * Результат анализа отклонения от оптимальной линии
+ */
+export interface TrackDeviationAnalysis {
+  /** Дистанция вдоль трека */
+  distance: number;
+  /** Фактические координаты */
+  actualX: number;
+  actualY: number;
+  /** Оптимальные координаты (центр envelope) */
+  optimalX: number;
+  optimalY: number;
+  /** Отклонение в метрах */
+  deviation: number;
+  /** Процент от ширины трека (0 = центр, 100 = на границе) */
+  deviationPercent: number;
+  /** Категория: 'safe' | 'warning' | 'danger' */
+  category: 'safe' | 'warning' | 'danger';
+}
+
+/**
+ * Анализ касания границ трека
+ */
+export interface BoundaryViolation {
+  /** Дистанция где произошло касание */
+  distance: number;
+  /** Координаты */
+  x: number;
+  y: number;
+  /** Тип касания: 'inner' | 'outer' */
+  side: 'inner' | 'outer';
+  /** Насколько вышли за границу (метры) */
+  overrun: number;
+}
+
+/**
+ * Corner detected from trajectory analysis
+ */
+export interface Corner {
+  id: number;
+  name: string;
+  startIndex: number;
+  endIndex: number;
+  apexIndex: number;
+  minSpeed: number;
+  entrySpeed: number;
+  exitSpeed: number;
+  turnDirection: 'left' | 'right';
+  maxCurvature: number;
+}

@@ -1,18 +1,131 @@
+@use 'sass:color';
 @use '../../../styles/variables' as *;
 
 .container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #1a1a1a; // Slightly lighter than main background
+  border-radius: $border-radius-md;
+}
+
+// ... existing canvas styles ...
+.canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.canvasInteractive {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+
+.canvasPanning {
+  cursor: grabbing;
+}
+
+.controls {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 10;
+}
+
+.zoomButton {
+  width: 32px;
+  height: 32px;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-sm;
+  background: $bg-tertiary;
+  color: $text-primary;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: $bg-tertiary;
-  border-radius: $border-radius-md;
-  overflow: hidden;
-  flex: 1;
-  width: 100%;
-  min-height: 300px;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: color.adjust($bg-tertiary, $lightness: 5%);
+    border-color: $border-color-hover;
+  }
+
+  &:active {
+    background: color.adjust($bg-tertiary, $lightness: -2%);
+  }
+
+  &.followActive {
+    color: $accent-primary;
+    background: rgba($accent-primary, 0.15);
+    border-color: rgba($accent-primary, 0.4);
+
+    &:hover {
+      background: rgba($accent-primary, 0.2);
+    }
+  }
 }
 
-.canvas {
-  display: block;
-  cursor: crosshair;
+.lapTimeDisplay {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  padding: 6px 10px;
+  border-radius: $border-radius-sm;
+  color: white;
+  font-family: $font-mono;
+  font-size: 1.2rem;
+  font-weight: $font-weight-bold;
+  pointer-events: none;
+  z-index: 10;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.lapInfo {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.lapNumber {
+  font-size: 0.9rem;
+  color: $text-secondary;
+  font-weight: normal;
+}
+
+.time {
+  // Inherits font styles from parent
+}
+
+.delta {
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.slow {
+  color: $status-error;
+}
+
+.fast {
+  color: $status-success;
 }

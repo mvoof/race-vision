@@ -33,8 +33,8 @@
     border-color $transition-fast;
 
   &:hover {
-    background: $bg-hover;
-    border-color: $accent-primary;
+    background: $bg-tertiary;
+    border-color: $border-color-hover;
   }
 }
 
@@ -44,8 +44,9 @@
   gap: $spacing-sm;
   padding: $spacing-sm $spacing-md;
   border-radius: $border-radius-sm;
+  font-family: $font-family;
   font-size: $font-size-md;
-  font-weight: 500;
+  font-weight: $font-weight-medium;
   cursor: pointer;
   transition: all $transition-fast;
   border: none;
@@ -60,26 +61,29 @@
 @mixin button-primary {
   @include button-base;
   background: $accent-primary;
-  color: white;
+  color: $text-inverse; // Contrast against Lime
 
   &:hover:not(:disabled) {
-    background: color.adjust($accent-primary, $lightness: 8%);
+    background: color.adjust(
+      $accent-primary,
+      $lightness: -5%
+    ); // Darken slightly on hover
   }
 
   &:active:not(:disabled) {
-    background: color.adjust($accent-primary, $lightness: -4%);
+    background: color.adjust($accent-primary, $lightness: -10%);
   }
 }
 
 @mixin button-secondary {
   @include button-base;
-  background: $bg-hover;
+  background: transparent;
   color: $text-primary;
   border: 1px solid $border-color;
 
   &:hover:not(:disabled) {
-    background: $bg-card;
-    border-color: $accent-primary;
+    background: $bg-tertiary;
+    border-color: $text-secondary;
   }
 }
 
@@ -93,34 +97,69 @@
 // Scrollbar styling
 @mixin custom-scrollbar {
   &::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px; // Slimmer
+    height: 6px;
   }
 
   &::-webkit-scrollbar-track {
-    background: $bg-tertiary;
-    border-radius: 4px;
+    background: transparent;
   }
 
   &::-webkit-scrollbar-thumb {
     background: $border-color;
-    border-radius: 4px;
+    border-radius: 3px;
 
     &:hover {
-      background: color.adjust($border-color, $lightness: 10%);
+      background: $text-secondary;
     }
   }
+}
+
+@mixin hide-scrollbar {
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
 // Monospace numbers
 @mixin mono-numbers {
   font-family: $font-mono;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+}
+
+@mixin racing-header {
+  font-family: $font-mono;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: $font-weight-bold;
+}
+
+@mixin widget-glow {
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  transition: box-shadow $transition-normal;
+
+  &:hover {
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+  }
 }
 
 // Animation
 @mixin fade-in($duration: $transition-normal) {
   animation: fadeIn $duration ease forwards;
+}
+
+@keyframes widgetPop {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes fadeIn {
@@ -132,16 +171,13 @@
   }
 }
 
-@mixin pulse {
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
+@keyframes smoothAppear {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
   }
-  50% {
-    opacity: 0.5;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

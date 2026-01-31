@@ -9,4 +9,5 @@ export {
   openFolderDialog,
   scanTelemetryFolder,
   loadTelemetryFile,
+  analyzeTrackBoundaries,
 } from './commands';

@@ -37,3 +37,13 @@ export {
   type ComputedTrackBoundary,
   type BoundaryGeneratorOptions,
 } from './boundaryGenerator';
+
+// Deviation analysis
+export {
+  analyzeTrajectoryDeviation,
+  detectBoundaryViolations,
+  getDeviationColor,
+} from './deviationAnalysis';
+
+// Corner analysis
+export { detectCorners, type Corner } from './cornerAnalysis';

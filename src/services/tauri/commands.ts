@@ -6,6 +6,8 @@ import type {
   LapTelemetry,
   TrajectoryPoint,
   TelemetryFileInfo,
+  TrackBoundaryEnvelope,
+  Corner,
 } from '../../types';
 
 /**
@@ -123,4 +125,26 @@ export async function loadTelemetryFile(path: string): Promise<{
   const session = await openTelemetryFile(path);
   const laps = await getLaps();
   return { session, laps };
+}
+
+/**
+ * Анализировать все телеметрии для трека и построить envelope границ
+ */
+export async function analyzeTrackBoundaries(
+  folderPath: string,
+  trackName: string
+): Promise<TrackBoundaryEnvelope> {
+  return invoke<TrackBoundaryEnvelope>('analyze_track_boundaries', {
+    folderPath,
+    trackName,
+  });
+}
+
+/**
+ * Detect corners using Rust backend
+ */
+export async function analyzeCorners(
+  trajectory: TrajectoryPoint[]
+): Promise<Corner[]> {
+  return invoke<Corner[]>('analyze_corners', { trajectory });
 }

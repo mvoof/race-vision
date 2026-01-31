@@ -90,3 +90,53 @@ impl Default for LapTelemetry {
         }
     }
 }
+
+/// Точка границы трека (envelope из всех телеметрий)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TrackBoundaryPoint {
+    /// Дистанция вдоль трека
+    pub distance: f32,
+    /// Минимальные координаты (самая внутренняя точка)
+    pub min_x: f32,
+    pub min_y: f32,
+    /// Максимальные координаты (самая внешняя точка)
+    pub max_x: f32,
+    pub max_y: f32,
+    /// Центральная линия (среднее всех траекторий)
+    pub center_x: f32,
+    pub center_y: f32,
+    /// Количество проходов через эту точку
+    pub sample_count: u32,
+}
+
+/// Envelope границ трека на основе всех телеметрий
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TrackBoundaryEnvelope {
+    /// Имя трека
+    pub track_name: String,
+    /// Общая длина трека
+    pub track_length: f32,
+    /// Точки границ
+    pub points: Vec<TrackBoundaryPoint>,
+    /// Количество проанализированных кругов
+    pub total_laps: u32,
+    /// Количество проанализированных файлов
+    pub total_files: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Corner {
+    pub id: u32,
+    pub name: String,
+    pub start_index: usize,
+    pub end_index: usize,
+    pub apex_index: usize,
+    pub min_speed: f32,
+    pub entry_speed: f32,
+    pub exit_speed: f32,
+    pub turn_direction: String, // "left" or "right"
+    pub max_curvature: f32,
+}

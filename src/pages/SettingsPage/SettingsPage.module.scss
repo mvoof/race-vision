@@ -10,9 +10,16 @@
 
 .header {
   @include flex-between;
-  padding: $spacing-md $spacing-lg;
+  padding: $spacing-md $spacing-xl;
   border-bottom: 1px solid $border-color;
   background: $bg-secondary;
+  flex-shrink: 0;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
 }
 
 .title {
@@ -22,50 +29,33 @@
   margin: 0;
 }
 
-.closeButton {
-  @include button-base;
-  padding: $spacing-sm;
-  background: transparent;
-  color: $text-secondary;
-  border-radius: $border-radius-sm;
-
-  &:hover {
-    background: $bg-hover;
-    color: $text-primary;
-  }
-
-  .icon {
-    width: 20px;
-    height: 20px;
-  }
-}
-
 .content {
   flex: 1;
   overflow-y: auto;
   padding: $spacing-xl;
-  max-width: 800px;
+  @include custom-scrollbar;
+}
+
+.settingsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: $spacing-lg;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .section {
-  margin-bottom: $spacing-xl;
-  padding: $spacing-lg;
-  background: $bg-card;
-  border-radius: $border-radius-md;
-  border: 1px solid $border-color;
+  height: auto;
 }
 
-.sectionTitle {
-  font-size: $font-size-lg;
-  font-weight: 600;
-  color: $text-primary;
-  margin: 0 0 $spacing-sm 0;
+.sectionBody {
+  padding: $spacing-md;
 }
 
 .sectionDescription {
-  font-size: $font-size-md;
+  font-size: $font-size-sm;
   color: $text-secondary;
-  margin: 0 0 $spacing-md 0;
+  margin-bottom: $spacing-md;
 }
 
 .folderSelector {
@@ -75,49 +65,30 @@
 }
 
 .folderPath {
-  padding: $spacing-md;
+  padding: $spacing-sm $spacing-md;
   background: $bg-tertiary;
-  border-radius: $border-radius-sm;
   border: 1px solid $border-color;
-  min-height: 48px;
+  border-radius: $border-radius-sm;
+  min-height: 40px;
   display: flex;
   align-items: center;
 }
 
 .path {
   font-family: $font-mono;
-  font-size: $font-size-sm;
+  font-size: $font-size-xs;
   color: $text-primary;
   word-break: break-all;
 }
 
 .noFolder {
   color: $text-muted;
-  font-style: italic;
+  font-size: $font-size-xs;
 }
 
 .folderActions {
   display: flex;
   gap: $spacing-sm;
-}
-
-.selectButton {
-  @include button-primary;
-  min-width: 150px;
-}
-
-.clearButton {
-  @include button-base;
-  padding: $spacing-sm $spacing-md;
-  background: $bg-tertiary;
-  color: $text-secondary;
-  border: 1px solid $border-color;
-
-  &:hover {
-    background: $bg-hover;
-    color: $text-primary;
-    border-color: $accent-danger;
-  }
 }
 
 .languageSelector {
@@ -126,67 +97,35 @@
 }
 
 .langButton {
-  @include button-base;
-  padding: $spacing-sm $spacing-md;
-  background: $bg-tertiary;
-  color: $text-secondary;
-  border: 1px solid $border-color;
-  min-width: 100px;
-
-  &:hover {
-    background: $bg-hover;
-    color: $text-primary;
-  }
-
-  &.active {
-    background: $accent-primary;
-    color: white;
-    border-color: $accent-primary;
-  }
+  flex: 1;
 }
 
 .dateFormatSelector {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: $spacing-sm;
 }
 
 .formatButton {
-  @include button-base;
+  height: auto;
+  padding: $spacing-sm;
+}
+
+.formatButtonContent {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: $spacing-sm $spacing-md;
-  background: $bg-tertiary;
-  color: $text-secondary;
-  border: 1px solid $border-color;
-  min-width: 120px;
-  text-align: left;
-
-  &:hover {
-    background: $bg-hover;
-    color: $text-primary;
-  }
-
-  &.active {
-    background: $accent-primary;
-    color: white;
-    border-color: $accent-primary;
-
-    .formatExample {
-      color: rgba(255, 255, 255, 0.8);
-    }
-  }
+  width: 100%;
 }
 
 .formatLabel {
   font-weight: 500;
-  font-size: $font-size-md;
+  font-size: $font-size-sm;
 }
 
 .formatExample {
-  font-size: $font-size-sm;
-  color: $text-muted;
+  font-size: $font-size-xs;
+  opacity: 0.7;
   font-family: $font-mono;
   margin-top: 2px;
 }
@@ -206,28 +145,24 @@
 
 .toggleSwitch {
   position: relative;
-  width: 48px;
-  height: 26px;
+  width: 40px;
+  height: 20px;
   background: $bg-tertiary;
   border: 1px solid $border-color;
-  border-radius: 13px;
+  border-radius: 10px;
   cursor: pointer;
-  transition:
-    background-color 0.2s,
-    border-color 0.2s;
+  transition: all $transition-fast;
 
   &::after {
     content: '';
     position: absolute;
     top: 2px;
     left: 2px;
-    width: 20px;
-    height: 20px;
-    background: $text-secondary;
+    width: 14px;
+    height: 14px;
+    background: $text-muted;
     border-radius: 50%;
-    transition:
-      transform 0.2s,
-      background-color 0.2s;
+    transition: all $transition-fast;
   }
 
   &.active {
@@ -235,27 +170,21 @@
     border-color: $accent-primary;
 
     &::after {
-      transform: translateX(22px);
-      background: white;
+      transform: translateX(20px);
+      background: $text-inverse;
     }
-  }
-
-  &:hover {
-    border-color: $accent-primary;
   }
 }
 
 .toggleLabel {
-  font-size: $font-size-md;
+  font-size: $font-size-sm;
   color: $text-primary;
 }
 
 .intervalSelector {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: $spacing-sm;
-  opacity: 1;
-  transition: opacity 0.2s;
 
   &.disabled {
     opacity: 0.5;
@@ -264,21 +193,5 @@
 }
 
 .intervalButton {
-  @include button-base;
-  padding: $spacing-sm $spacing-md;
-  background: $bg-tertiary;
-  color: $text-secondary;
-  border: 1px solid $border-color;
-  min-width: 80px;
-
-  &:hover {
-    background: $bg-hover;
-    color: $text-primary;
-  }
-
-  &.active {
-    background: $accent-primary;
-    color: white;
-    border-color: $accent-primary;
-  }
+  width: 100%;
 }

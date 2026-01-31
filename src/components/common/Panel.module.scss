@@ -1,0 +1,79 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.panel {
+  background: $bg-card;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-sm;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-sm $spacing-md;
+  background: $bg-secondary;
+  border-bottom: 1px solid $border-color;
+  min-height: 36px;
+  flex-shrink: 0;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  font-family: $font-mono;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: $text-secondary;
+}
+
+.titleIcon {
+  color: $accent-primary;
+  display: flex;
+  align-items: center;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+}
+
+.content {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+
+  &.scrollable {
+    overflow-y: auto;
+    @include custom-scrollbar;
+  }
+}
+
+.footer {
+  padding: $spacing-xs $spacing-md;
+  background: $bg-secondary;
+  border-top: 1px solid $border-color;
+  font-size: $font-size-xs;
+  color: $text-muted;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+}
+
+// Variants
+.noBorder {
+  border: none;
+}
+
+.noBackground {
+  background: transparent;
+}

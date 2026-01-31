@@ -1,0 +1,171 @@
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+.widgetPalette {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.header {
+  @include flex-between;
+  gap: $spacing-md;
+}
+
+.title {
+  @include racing-header;
+  font-size: $font-size-lg;
+  color: $text-primary;
+  margin: 0;
+}
+
+.count {
+  @include mono-numbers;
+  font-size: $font-size-sm;
+  color: $text-secondary;
+  background: rgba(59, 130, 246, 0.1);
+  padding: 4px 12px;
+  border-radius: $border-radius-sm;
+}
+
+.categories {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.category {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.categoryTitle {
+  @include racing-header;
+  font-size: $font-size-sm;
+  color: $text-secondary;
+  margin: 0;
+  padding-bottom: $spacing-xs;
+  border-bottom: 1px solid $border-color;
+}
+
+.widgetList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.widgetItem {
+  @include flex-between;
+  gap: $spacing-md;
+  padding: $spacing-sm $spacing-md;
+  background: $bg-card;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-sm;
+  cursor: pointer;
+  transition: all $transition-fast;
+  text-align: left;
+
+  &:hover:not(:disabled) {
+    background: $bg-hover;
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+
+  &.visible {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: $accent-primary;
+
+    .toggleIndicator {
+      color: $accent-primary;
+    }
+  }
+
+  &.hidden {
+    opacity: 0.6;
+
+    .widgetIcon {
+      filter: grayscale(100%);
+      opacity: 0.5;
+    }
+
+    .toggleIndicator {
+      color: $text-muted;
+    }
+  }
+
+  &.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: $bg-tertiary;
+
+    &:hover {
+      background: $bg-tertiary;
+      border-color: $border-color;
+    }
+
+    .widgetIcon {
+      filter: grayscale(100%);
+    }
+  }
+}
+
+.widgetIcon {
+  font-size: 20px;
+  flex-shrink: 0;
+  transition: all $transition-fast;
+}
+
+.widgetName {
+  flex: 1;
+  font-size: $font-size-sm;
+  color: $text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.toggleIndicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: color $transition-fast;
+
+  svg {
+    display: block;
+  }
+}
+
+.notAvailable {
+  font-size: $font-size-xs;
+  color: $text-muted;
+  font-weight: $font-weight-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+// Animation for visibility toggle
+.widgetItem.visible {
+  animation: smoothAppear 0.2s ease-out;
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .widgetPalette {
+    gap: $spacing-md;
+  }
+
+  .categories {
+    gap: $spacing-md;
+  }
+
+  .widgetItem {
+    padding: $spacing-md;
+  }
+
+  .widgetIcon {
+    font-size: 24px;
+  }
+
+  .widgetName {
+    font-size: $font-size-md;
+  }
+}

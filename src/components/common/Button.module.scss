@@ -1,0 +1,123 @@
+@use 'sass:color';
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-sm;
+  padding: $spacing-sm $spacing-lg;
+  font-family: $font-family;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  border-radius: $border-radius-sm;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all $transition-fast;
+  white-space: nowrap;
+  user-select: none;
+  height: 32px; // Standard engineering height
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &.primary {
+    background: $accent-primary;
+    color: $text-inverse;
+
+    &:hover:not(:disabled) {
+      background: color.adjust($accent-primary, $lightness: 5%);
+      box-shadow: 0 0 10px rgba($accent-primary, 0.2);
+    }
+
+    &:active:not(:disabled) {
+      background: color.adjust($accent-primary, $lightness: -5%);
+    }
+  }
+
+  &.secondary {
+    background: $bg-tertiary;
+    color: $text-primary;
+    border-color: $border-color;
+
+    &:hover:not(:disabled) {
+      background: color.adjust($bg-tertiary, $lightness: 5%);
+      border-color: $border-color-hover;
+    }
+
+    &:active:not(:disabled) {
+      background: color.adjust($bg-tertiary, $lightness: -2%);
+    }
+  }
+
+  &.outline {
+    background: transparent;
+    color: $text-primary;
+    border-color: $border-color;
+
+    &:hover:not(:disabled) {
+      background: rgba($text-primary, 0.05);
+      border-color: $text-primary;
+    }
+
+    &:active:not(:disabled) {
+      background: rgba($text-primary, 0.1);
+    }
+  }
+
+  &.ghost {
+    background: transparent;
+    color: $text-secondary;
+    padding: $spacing-sm;
+
+    &:hover:not(:disabled) {
+      background: rgba($text-primary, 0.05);
+      color: $text-primary;
+    }
+  }
+
+  &.danger {
+    background: transparent;
+    color: $status-error;
+    border-color: rgba($status-error, 0.3);
+
+    &:hover:not(:disabled) {
+      background: $status-error;
+      color: $text-inverse;
+      border-color: $status-error;
+    }
+  }
+
+  &.small {
+    height: 24px;
+    padding: 0 $spacing-md;
+    font-size: $font-size-xs;
+  }
+
+  &.large {
+    height: 40px;
+    padding: 0 $spacing-xl;
+    font-size: $font-size-md;
+  }
+
+  &.iconOnly {
+    padding: 0;
+    width: 32px;
+
+    &.small {
+      width: 24px;
+    }
+    &.large {
+      width: 40px;
+    }
+  }
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
