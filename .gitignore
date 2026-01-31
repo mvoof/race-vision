@@ -27,6 +27,7 @@ target/
 .continue/
 .claude/
 CLAUDE.md
+GEMINI.md
 
 # Samples
 samples/
