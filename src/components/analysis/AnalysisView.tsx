@@ -331,34 +331,10 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
     }
 
     let rafId = 0;
-    let _avFrame = 0;
     const update = () => {
-      _avFrame++;
       const time = currentTimeRef.current;
       const ls = lapsRef.current;
-      // Debug: expose cursor ref chain state
-      const _activeLap = ls.find(
-        (l) => time >= l.startTimestamp && (l.endTimestamp ? time < l.endTimestamp : true)
-      );
-      const _cache = lapCacheRef.current;
-      const _data = _activeLap ? (
-        _cache[_activeLap.lapNumber]?.telemetry ||
-        (_activeLap.lapNumber === selectedLapRef.current ? lapTelemetryRef.current : null)
-      ) : null;
-      (window as unknown as Record<string, unknown>).__analysisDebug = {
-        frame: _avFrame, time, lapsCount: ls.length,
-        activeLapNum: _activeLap?.lapNumber ?? null,
-        activeLapStart: _activeLap?.startTimestamp ?? null,
-        activeLapEnd: _activeLap?.endTimestamp ?? null,
-        hasData: !!_data,
-        samplesCount: _data?.samples?.length ?? 0,
-        selectedLap: selectedLapRef.current,
-        cursorDistRef: cursorDistanceRef.current,
-        firstLapStart: ls[0]?.startTimestamp,
-        elapsed: _activeLap ? time - _activeLap.startTimestamp : null,
-        sampleTsRange: _data ? [_data.samples[0]?.timestamp, _data.samples[_data.samples.length - 1]?.timestamp] : null,
-        sampleDistRange: _data ? [_data.samples[0]?.lapDistance, _data.samples[_data.samples.length - 1]?.lapDistance] : null,
-      };
+
       if (!ls.length) {
         rafId = requestAnimationFrame(update);
         return;
@@ -385,14 +361,6 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
         const elapsed = time - activeLap.startTimestamp;
         const result = interpolateSampleAtTime(data.samples, elapsed);
         cursorDistanceRef.current = result?.distance ?? null;
-        // Debug: expose actual interpolation result
-        (window as unknown as Record<string, unknown>).__interpDebug = {
-          elapsed,
-          resultDist: result?.distance,
-          resultTs: result?.sample?.timestamp,
-          sampleFirst: data.samples[0]?.timestamp,
-          sampleLast: data.samples[data.samples.length - 1]?.timestamp,
-        };
       }
 
       rafId = requestAnimationFrame(update);

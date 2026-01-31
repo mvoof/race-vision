@@ -371,7 +371,10 @@ impl TelemetryParser for LmuParser {
             return Err(ParserError::MissingData("Lap has no telemetry data".to_string()));
         }
 
-        let start_idx_10hz = ((start_ts - lap_events[0].0) * sample_rate as f64).max(0.0) as usize;
+        // Channel data arrays are indexed from session start (time=0), not from
+        // the first lap event.  Use absolute start_ts so we read from the correct
+        // offset inside the channel data.
+        let start_idx_10hz = (start_ts * sample_rate as f64).max(0.0) as usize;
 
         // Создаём samples
         let mut samples = Vec::with_capacity(num_samples);
@@ -501,7 +504,8 @@ impl TelemetryParser for LmuParser {
             ));
         }
 
-        let start_idx = ((start_ts - lap_events[0].0) * sample_rate as f64).max(0.0) as usize;
+        // Channel data arrays are indexed from session start (time=0).
+        let start_idx = (start_ts * sample_rate as f64).max(0.0) as usize;
 
         let mut points = Vec::with_capacity(num_samples);
 

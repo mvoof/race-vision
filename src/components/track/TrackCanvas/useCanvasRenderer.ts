@@ -200,12 +200,10 @@ export function useCanvasRenderer(
 
   useEffect(() => {
     const canvas = interactiveRef.current;
-    console.log('[CURSOR_RAF] mount, canvas=', !!canvas, 'size=', sizeRef.current);
     if (!canvas) return;
 
     const dpr = window.devicePixelRatio || 1;
     let rafId = 0;
-    let _frameCount = 0;
     let prevX = NaN;
     let prevY = NaN;
     let prevHeading = NaN;
@@ -245,16 +243,6 @@ export function useCanvasRenderer(
     };
 
     const draw = () => {
-      _frameCount++;
-      // Debug: expose cursor state on window for inspection
-      (window as unknown as Record<string, unknown>).__cursorDebug = {
-        frame: _frameCount,
-        dist: extCursorDistRef.current?.current,
-        cursorPos: cursorPosRef.current,
-        size: sizeRef.current,
-        cam: cameraRef.current,
-        pts: worldPointsRef.current?.length ?? 0,
-      };
       const dragging = isDraggingRef.current;
       const cam = cameraRef.current;
       const pts = worldPointsRef.current;
