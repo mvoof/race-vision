@@ -1,34 +1,38 @@
-import { useRef, useEffect, useCallback, useMemo, useState, type RefObject } from 'react';
+import {
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+  useState,
+  type RefObject,
+} from 'react';
 import { Crosshair } from 'lucide-react';
 import type {
   TrajectoryPoint,
-  CoordinateTransform,
-  GeoBounds,
   ComputedTrackBoundary,
   TrackBoundaryEnvelope,
-  Corner,
-  Point2D,
+  TrackViewData,
+  OffsetBoundaries,
+  EnvelopeWorldPoints,
 } from '../../../types';
 import {
-  createCoordinateTransform,
-  transformTrajectoryToSvg,
-  calculateBoundsFromTrajectory,
-  detectCorners,
-} from '../../../services/track';
-import { precomputeColorArray, type ColorMode } from './utils/colorUtils';
-import { buildSpatialGrid, findNearestPoint } from './utils/spatialIndex';
+  prepareTrackView,
+  findNearestPoint as findNearestPointRust,
+  transformEnvelopePoints,
+  generateOffsetBoundaries as generateOffsetBoundariesRust,
+  interpolateCursorPosition as interpolateCursorPositionRust,
+} from '../../../services/tauri/commands';
+import { useTrackViewStore } from '../../../stores/trackViewStore';
+import { useBoundaryStore } from '../../../stores/boundaryStore';
 import { screenToWorld } from './utils/canvasTransform';
 import type { Camera } from './utils/canvasTransform';
 import { useCanvasRenderer } from './useCanvasRenderer';
 import styles from './TrackCanvas.module.scss';
 
-export type { ColorMode };
-
 interface TrackCanvasProps {
   trajectory: TrajectoryPoint[];
   computedBoundary?: ComputedTrackBoundary | null;
   envelope?: TrackBoundaryEnvelope | null;
-  colorMode?: ColorMode;
   trackColor?: string;
   trackWidth?: number;
   showStartFinish?: boolean;
@@ -38,7 +42,6 @@ interface TrackCanvasProps {
   boundaryStyle?: 'solid' | 'dashed';
   boundaryColor?: string;
   boundaryOpacity?: number;
-  cursorDistance?: number | null;
   /** High-frequency cursor distance ref — updated at 60fps during playback.
    *  The cursor rAF loop reads from this ref to bypass React's render cycle. */
   cursorDistanceRef?: RefObject<number | null>;
@@ -47,13 +50,6 @@ interface TrackCanvasProps {
   deltaTime?: number | null;
   onDistanceHover?: (distance: number | null) => void;
   className?: string;
-  viewBox?: { x: number; y: number; width: number; height: number } | null;
-  onViewBoxChange?: (viewBox: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  }) => void;
 }
 
 const PADDING = 40;
@@ -72,65 +68,10 @@ function formatDelta(seconds: number): string {
   return `${sign}${seconds.toFixed(3)}`;
 }
 
-/**
- * Generate offset boundaries from SVG points (fallback when no envelope/computed boundary)
- */
-function generateOffsetBoundaries(
-  points: Point2D[],
-  offset: number
-): { left: Point2D[]; right: Point2D[] } {
-  if (points.length < 2) return { left: [], right: [] };
-
-  const left: Point2D[] = [];
-  const right: Point2D[] = [];
-
-  // Subsample for smoother boundaries
-  const subsampled: Point2D[] = [];
-  for (let i = 0; i < points.length; i += 3) {
-    subsampled.push(points[i]);
-  }
-  if (subsampled[subsampled.length - 1] !== points[points.length - 1]) {
-    subsampled.push(points[points.length - 1]);
-  }
-
-  for (let i = 0; i < subsampled.length; i++) {
-    let dx: number, dy: number;
-
-    if (i === 0) {
-      dx = subsampled[1].x - subsampled[0].x;
-      dy = subsampled[1].y - subsampled[0].y;
-    } else if (i === subsampled.length - 1) {
-      dx = subsampled[i].x - subsampled[i - 1].x;
-      dy = subsampled[i].y - subsampled[i - 1].y;
-    } else {
-      dx = (subsampled[i + 1].x - subsampled[i - 1].x) / 2;
-      dy = (subsampled[i + 1].y - subsampled[i - 1].y) / 2;
-    }
-
-    const length = Math.sqrt(dx * dx + dy * dy);
-    if (length === 0) continue;
-
-    const perpX = -dy / length;
-    const perpY = dx / length;
-
-    left.push({
-      x: subsampled[i].x + perpX * offset,
-      y: subsampled[i].y + perpY * offset,
-    });
-    right.push({
-      x: subsampled[i].x - perpX * offset,
-      y: subsampled[i].y - perpY * offset,
-    });
-  }
-
-  return { left, right };
-}
-
 export function TrackCanvas({
   trajectory,
   computedBoundary,
   envelope,
-  colorMode = 'speed',
   trackColor = '#4a90d9',
   trackWidth = 3,
   showStartFinish = true,
@@ -140,35 +81,43 @@ export function TrackCanvas({
   boundaryStyle = 'solid',
   boundaryColor = '#ffffff',
   boundaryOpacity = 0.7,
-  cursorDistance = null,
   cursorDistanceRef,
   currentLapTime = null,
   currentLapNumber = null,
   deltaTime = null,
   onDistanceHover,
   className,
-  viewBox: externalViewBox,
-  onViewBoxChange,
 }: TrackCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const staticRef = useRef<HTMLCanvasElement>(null);
   const dynamicRef = useRef<HTMLCanvasElement>(null);
   const interactiveRef = useRef<HTMLCanvasElement>(null);
 
+  // Local-only state (DOM-specific, not shared)
   const [size, setSize] = useState({ width: 400, height: 400 });
-  const [internalViewBox, setInternalViewBox] = useState<{
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  } | null>(null);
-  const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
-  const [isDraggingCursor, setIsDraggingCursor] = useState(false);
-  const [isFollowing, setIsFollowing] = useState(false);
 
-  const viewBox = externalViewBox ?? internalViewBox;
-  const setViewBox = onViewBoxChange ?? setInternalViewBox;
+  // ── Rust Prepared Data ──
+  const [trackViewData, setTrackViewData] = useState<TrackViewData | null>(null);
+  const [envelopePoints, setEnvelopePoints] = useState<EnvelopeWorldPoints | null>(null);
+  const [offsets, setOffsets] = useState<OffsetBoundaries | null>(null);
+  const [cursorPos, setCursorPos] = useState<{ x: number; y: number; heading: number } | null>(null);
+
+  // ── Store state ──
+  const viewBox = useTrackViewStore((s) => s.viewBox);
+  const setViewBox = useTrackViewStore((s) => s.setViewBox);
+  const isFollowing = useTrackViewStore((s) => s.isFollowing);
+  const setIsFollowing = useTrackViewStore((s) => s.setIsFollowing);
+  const toggleFollowing = useTrackViewStore((s) => s.toggleFollowing);
+  const isPanning = useTrackViewStore((s) => s.isPanning);
+  const setIsPanning = useTrackViewStore((s) => s.setIsPanning);
+  const isDraggingCursor = useTrackViewStore((s) => s.isDraggingCursor);
+  const setIsDraggingCursor = useTrackViewStore((s) => s.setIsDraggingCursor);
+  const colorMode = useTrackViewStore((s) => s.colorMode);
+  const cursorDistance = useTrackViewStore((s) => s.cursorDistance);
+
+  const corners = useBoundaryStore((s) => s.corners);
+  const setCorners = useBoundaryStore((s) => s.setCorners);
 
   // --- ResizeObserver (debounced via rAF) ---
   useEffect(() => {
@@ -197,138 +146,119 @@ export function TrackCanvas({
 
   const { width, height } = size;
 
-  // --- Data pipeline (reusing existing services) ---
+  // --- Data pipeline (Rust backend) ---
 
-  const combinedBounds = useMemo((): GeoBounds => {
-    return calculateBoundsFromTrajectory(trajectory);
-  }, [trajectory]);
+  // Prepare main track view data
+  useEffect(() => {
+    if (trajectory.length === 0 || width === 0 || height === 0) {
+      setTrackViewData(null);
+      return;
+    }
 
-  const transform = useMemo((): CoordinateTransform => {
-    return createCoordinateTransform(combinedBounds, width, height, PADDING);
-  }, [combinedBounds, width, height]);
+    let active = true;
+    prepareTrackView(trajectory, width, height, PADDING, colorMode, trackColor)
+      .then(data => {
+        if (active) setTrackViewData(data);
+      })
+      .catch(err => console.error('Failed to prepare track view:', err));
 
-  const worldPoints = useMemo(() => {
-    return transformTrajectoryToSvg(trajectory, transform);
-  }, [trajectory, transform]);
+    return () => { active = false; };
+  }, [trajectory, width, height, colorMode, trackColor]);
 
-  // Pre-compute color array
-  const colorArray = useMemo(() => {
-    return precomputeColorArray(worldPoints, colorMode, trackColor);
-  }, [worldPoints, colorMode, trackColor]);
-
-  // Spatial index for O(1) cursor snapping
-  const spatialGrid = useMemo(() => {
-    return buildSpatialGrid(worldPoints);
-  }, [worldPoints]);
-
-  // Corners (async via Rust)
-  const [corners, setCorners] = useState<Corner[]>([]);
-
+  // Corners (async via Rust) — stored in boundaryStore
   useEffect(() => {
     if (trajectory.length === 0) {
       setCorners([]);
       return;
     }
 
+    // Reuse detectCorners from services (already calls Rust analyze_corners)
+    import('../../../services/tauri/commands').then(({ analyzeCorners }) => {
+      analyzeCorners(trajectory)
+        .then((result) => setCorners(result))
+        .catch((err) => console.error('Failed to detect corners:', err));
+    });
+  }, [trajectory, setCorners]);
+
+  // Envelope world points (Rust backend)
+  useEffect(() => {
+    if (!envelope || envelope.points.length === 0 || !trackViewData) {
+      setEnvelopePoints(null);
+      return;
+    }
+
     let active = true;
-    detectCorners(trajectory)
-      .then((result) => {
-        if (active) setCorners(result);
-      })
-      .catch((err) => {
-        console.error('Failed to detect corners:', err);
-        if (active) setCorners([]);
+    transformEnvelopePoints(
+      envelope.points,
+      trackViewData.bounds.minLon,
+      trackViewData.bounds.minLat,
+      trackViewData.bounds.maxLat,
+      width,
+      height,
+      PADDING,
+      trackViewData.scale,
+      trackViewData.offsetX,
+      trackViewData.offsetY
+    ).then(res => {
+      if (active) setEnvelopePoints(res);
+    });
+
+    return () => { active = false; };
+  }, [envelope, trackViewData, width, height]);
+
+  // Offset boundaries (Rust backend)
+  useEffect(() => {
+    if (envelope || (computedBoundary?.leftBoundary && computedBoundary?.rightBoundary) || !trackViewData) {
+      setOffsets(null);
+      return;
+    }
+
+    let active = true;
+    generateOffsetBoundariesRust(trackViewData.worldPoints, 8)
+      .then(res => {
+        if (active) setOffsets(res);
       });
 
-    return () => {
-      active = false;
-    };
-  }, [trajectory]);
+    return () => { active = false; };
+  }, [trackViewData, envelope, computedBoundary]);
 
-  // Envelope world points (transform geo → SVG coords)
-  const envelopeWorldPoints = useMemo(() => {
-    if (!envelope || envelope.points.length === 0) return null;
-
-    const inner: Point2D[] = [];
-    const outer: Point2D[] = [];
-    const center: Point2D[] = [];
-
-    for (const p of envelope.points) {
-      inner.push(transform.geoToSvg(p.minX, p.minY));
-      outer.push(transform.geoToSvg(p.maxX, p.maxY));
-      center.push(transform.geoToSvg(p.centerX, p.centerY));
+  // Cursor position (Rust backend)
+  useEffect(() => {
+    if (cursorDistance === null || !trackViewData || trackViewData.worldPoints.length < 2) {
+      setCursorPos(null);
+      return;
     }
 
-    return { inner, outer, center };
-  }, [envelope, transform]);
+    let active = true;
+    interpolateCursorPositionRust(trackViewData.worldPoints, cursorDistance)
+      .then(pos => {
+        if (active) setCursorPos(pos);
+      });
 
-  // Offset boundaries (fallback)
-  const offsetBoundaries = useMemo(() => {
-    if (
-      envelope ||
-      (computedBoundary?.leftBoundary && computedBoundary?.rightBoundary)
-    ) {
-      return null;
-    }
-    if (worldPoints.length < 2) return null;
-    return generateOffsetBoundaries(worldPoints, 8);
-  }, [worldPoints, envelope, computedBoundary]);
+    return () => { active = false; };
+  }, [cursorDistance, trackViewData]);
 
-  // Cursor position with heading (interpolated between track points for smooth motion)
-  const cursorPosition = useMemo(() => {
-    if (cursorDistance === null || worldPoints.length < 2) return null;
-
-    // Binary search for the segment that brackets cursorDistance
-    let lo = 0;
-    let hi = worldPoints.length - 1;
-    while (lo < hi - 1) {
-      const mid = (lo + hi) >> 1;
-      if (worldPoints[mid].distance <= cursorDistance) {
-        lo = mid;
-      } else {
-        hi = mid;
-      }
-    }
-
-    const pA = worldPoints[lo];
-    const pB = worldPoints[hi];
-    const segLen = pB.distance - pA.distance;
-
-    // Interpolation fraction (0..1) within the segment
-    const t = segLen > 0 ? Math.max(0, Math.min(1, (cursorDistance - pA.distance) / segLen)) : 0;
-
-    const x = pA.x + (pB.x - pA.x) * t;
-    const y = pA.y + (pB.y - pA.y) * t;
-
-    // Heading from segment direction
-    const heading = Math.atan2(pB.y - pA.y, pB.x - pA.x);
-
-    return { x, y, heading };
-  }, [cursorDistance, worldPoints]);
-
-  // Start/finish positions
+  // Start/finish positions (memoized from trackViewData)
   const startPosition = useMemo(() => {
-    if (worldPoints.length < 2) return null;
-    const dx = worldPoints[1].x - worldPoints[0].x;
-    const dy = worldPoints[1].y - worldPoints[0].y;
+    const pts = trackViewData?.worldPoints;
+    if (!pts || pts.length < 2) return null;
     return {
-      x: worldPoints[0].x,
-      y: worldPoints[0].y,
-      heading: Math.atan2(dy, dx),
+      x: pts[0].x,
+      y: pts[0].y,
+      heading: Math.atan2(pts[1].y - pts[0].y, pts[1].x - pts[0].x),
     };
-  }, [worldPoints]);
+  }, [trackViewData]);
 
   const finishPosition = useMemo(() => {
-    if (worldPoints.length < 2) return null;
-    const last = worldPoints.length - 1;
-    const dx = worldPoints[last].x - worldPoints[last - 1].x;
-    const dy = worldPoints[last].y - worldPoints[last - 1].y;
+    const pts = trackViewData?.worldPoints;
+    if (!pts || pts.length < 2) return null;
+    const last = pts.length - 1;
     return {
-      x: worldPoints[last].x,
-      y: worldPoints[last].y,
-      heading: Math.atan2(dy, dx),
+      x: pts[last].x,
+      y: pts[last].y,
+      heading: Math.atan2(pts[last].y - pts[last - 1].y, pts[last].x - pts[last - 1].x),
     };
-  }, [worldPoints]);
+  }, [trackViewData]);
 
   // Camera
   const defaultCamera = useMemo(
@@ -343,35 +273,45 @@ export function TrackCanvas({
 
   const camera: Camera = viewBox ?? defaultCamera;
 
+  // Follow-cam callback: centers camera on car position from the rAF loop
+  const handleCameraFollow = useCallback(
+    (vb: { x: number; y: number; width: number; height: number }) => {
+      setViewBox(vb);
+    },
+    [setViewBox]
+  );
+
   // --- Render via hook ---
   useCanvasRenderer(staticRef, dynamicRef, interactiveRef, {
     width,
     height,
     camera,
-    envelopeWorldPoints,
+    envelopeWorldPoints: envelopePoints,
     showEnvelope,
     computedBoundary,
-    offsetBoundaries,
+    offsetBoundaries: offsets,
     showBoundaries,
     boundaryColor,
     boundaryOpacity,
     boundaryStyle,
-    worldPoints,
-    colors: colorArray,
+    worldPoints: trackViewData?.worldPoints ?? [],
+    colors: trackViewData?.colors ?? [],
     trackWidth,
     isSolidMode: colorMode === 'solid',
     trackColor,
     startPosition,
     finishPosition,
     showStartFinish,
-    cursorPosition,
+    cursorPosition: cursorPos,
     cursorDistanceRef,
     isDragging: isDraggingCursor,
     corners,
     showCorners,
+    isFollowing,
+    onCameraFollow: handleCameraFollow,
   });
 
-  // --- Interaction handlers (on the interactive canvas) ---
+  // --- Interaction handlers ---
 
   const getWorldCoords = useCallback(
     (e: React.MouseEvent): { x: number; y: number } => {
@@ -415,21 +355,21 @@ export function TrackCanvas({
   );
 
   const snapCursorToWorld = useCallback(
-    (worldX: number, worldY: number) => {
-      if (!onDistanceHover || worldPoints.length === 0) return;
-      const idx = findNearestPoint(spatialGrid, worldX, worldY);
+    async (worldX: number, worldY: number) => {
+      if (!onDistanceHover || !trackViewData) return;
+      const idx = await findNearestPointRust(trackViewData.worldPoints, worldX, worldY);
       if (idx >= 0) {
-        onDistanceHover(worldPoints[idx].distance);
+        onDistanceHover(trackViewData.worldPoints[idx].distance);
       }
     },
-    [onDistanceHover, worldPoints, spatialGrid]
+    [onDistanceHover, trackViewData]
   );
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       if (e.button === 0) {
         // LMB → drag cursor
-        if (onDistanceHover && worldPoints.length > 0) {
+        if (onDistanceHover && trackViewData) {
           e.preventDefault();
           e.stopPropagation();
           setIsDraggingCursor(true);
@@ -444,7 +384,7 @@ export function TrackCanvas({
         setPanStart({ x: e.clientX, y: e.clientY });
       }
     },
-    [getWorldCoords, onDistanceHover, worldPoints, snapCursorToWorld]
+    [getWorldCoords, onDistanceHover, trackViewData, snapCursorToWorld, setIsDraggingCursor, setIsPanning, setIsFollowing]
   );
 
   const handleMouseMove = useCallback(
@@ -484,21 +424,19 @@ export function TrackCanvas({
   const handleMouseUp = useCallback(() => {
     setIsPanning(false);
     setIsDraggingCursor(false);
-  }, []);
+  }, [setIsPanning, setIsDraggingCursor]);
 
   const handleMouseLeave = useCallback(() => {
     setIsPanning(false);
     setIsDraggingCursor(false);
-  }, []);
+  }, [setIsPanning, setIsDraggingCursor]);
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
   }, []);
 
   const handleDoubleClick = useCallback(() => {
-    setViewBox(
-      null as unknown as { x: number; y: number; width: number; height: number }
-    );
+    setViewBox(null);
   }, [setViewBox]);
 
   // Zoom button helpers
@@ -541,21 +479,8 @@ export function TrackCanvas({
   }, [camera, width, height, setViewBox]);
 
   const resetZoom = useCallback(() => {
-    setViewBox(
-      null as unknown as { x: number; y: number; width: number; height: number }
-    );
+    setViewBox(null);
   }, [setViewBox]);
-
-  // Auto-follow: center camera on cursor when follow mode is active
-  useEffect(() => {
-    if (!isFollowing || !cursorPosition) return;
-    setViewBox({
-      x: cursorPosition.x - camera.width / 2,
-      y: cursorPosition.y - camera.height / 2,
-      width: camera.width,
-      height: camera.height,
-    });
-  }, [isFollowing, cursorPosition]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Prevent default wheel scroll on the canvas
   useEffect(() => {
@@ -623,7 +548,7 @@ export function TrackCanvas({
         </button>
         <button
           className={`${styles.zoomButton} ${isFollowing ? styles.followActive : ''}`}
-          onClick={() => setIsFollowing((f) => !f)}
+          onClick={toggleFollowing}
           title={isFollowing ? 'Stop following car' : 'Follow car'}
         >
           <Crosshair size={16} />

@@ -15,7 +15,10 @@ interface SessionState {
   isLoadingTrajectory: boolean;
 
   // Cache for all loaded laps
-  lapCache: Record<number, { trajectory: TrajectoryPoint[]; telemetry: LapTelemetry | null }>;
+  lapCache: Record<
+    number,
+    { trajectory: TrajectoryPoint[]; telemetry: LapTelemetry | null }
+  >;
 
   // LRU order for eviction (most recent at end)
   telemetryCacheOrder: number[];
@@ -30,7 +33,10 @@ interface SessionState {
   setLaps: (laps: Lap[]) => void;
   setSelectedLap: (lapNumber: number | null) => void;
   setTrajectory: (trajectory: TrajectoryPoint[]) => void;
-  cacheLapData: (lapNumber: number, data: { trajectory?: TrajectoryPoint[]; telemetry?: LapTelemetry | null }) => void;
+  cacheLapData: (
+    lapNumber: number,
+    data: { trajectory?: TrajectoryPoint[]; telemetry?: LapTelemetry | null }
+  ) => void;
   touchCache: (lapNumber: number) => void;
   setLoadingTrajectory: (isLoading: boolean) => void;
   setLoading: (isLoading: boolean) => void;
@@ -56,7 +62,13 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
   setSession: (session) => set({ session, error: null }),
 
-  setLaps: (laps) => set({ laps, lapCache: {}, telemetryCacheOrder: [], trajectoryCacheOrder: [] }), // Reset cache on new laps
+  setLaps: (laps) =>
+    set({
+      laps,
+      lapCache: {},
+      telemetryCacheOrder: [],
+      trajectoryCacheOrder: [],
+    }), // Reset cache on new laps
 
   setSelectedLap: (selectedLapNumber) => {
     const { lapCache } = get();
@@ -64,7 +76,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       set({
         selectedLapNumber,
         trajectory: lapCache[selectedLapNumber].trajectory,
-        isLoadingTrajectory: false
+        isLoadingTrajectory: false,
       });
     } else {
       set({ selectedLapNumber });
@@ -87,9 +99,9 @@ export const useSessionStore = create<SessionState>((set, get) => ({
           ...lapCache,
           [selectedLapNumber]: {
             ...lapCache[selectedLapNumber],
-            trajectory
-          }
-        }
+            trajectory,
+          },
+        },
       });
     } else {
       set({ trajectory, isLoadingTrajectory: false });
@@ -97,91 +109,94 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   },
 
   // Action to cache data with LRU eviction for telemetry
-  cacheLapData: (lapNumber, data) => set((state) => {
-    const current = state.lapCache[lapNumber];
-    if (
-      current &&
-      (data.trajectory === undefined || current.trajectory === data.trajectory) &&
-      (data.telemetry === undefined || current.telemetry === data.telemetry)
-    ) {
-      return state;
-    }
-
-    const newTelemetry = data.telemetry ?? current?.telemetry ?? null;
-    let newTelemetryOrder = [...state.telemetryCacheOrder];
-    let newTrajectoryOrder = [...state.trajectoryCacheOrder];
-    let newLapCache = { ...state.lapCache };
-
-    // If we're adding telemetry data, manage LRU
-    if (data.telemetry !== undefined && data.telemetry !== null) {
-      newTelemetryOrder = newTelemetryOrder.filter(n => n !== lapNumber);
-      newTelemetryOrder.push(lapNumber);
-
-      while (newTelemetryOrder.length > MAX_CACHED_TELEMETRY) {
-        const evictLap = newTelemetryOrder.shift()!;
-        if (newLapCache[evictLap]) {
-          newLapCache = {
-            ...newLapCache,
-            [evictLap]: {
-              trajectory: newLapCache[evictLap].trajectory,
-              telemetry: null,
-            }
-          };
-        }
+  cacheLapData: (lapNumber, data) =>
+    set((state) => {
+      const current = state.lapCache[lapNumber];
+      if (
+        current &&
+        (data.trajectory === undefined ||
+          current.trajectory === data.trajectory) &&
+        (data.telemetry === undefined || current.telemetry === data.telemetry)
+      ) {
+        return state;
       }
-    }
 
-    // If we're adding trajectory data, manage LRU
-    if (data.trajectory !== undefined && data.trajectory.length > 0) {
-      newTrajectoryOrder = newTrajectoryOrder.filter(n => n !== lapNumber);
-      newTrajectoryOrder.push(lapNumber);
+      const newTelemetry = data.telemetry ?? current?.telemetry ?? null;
+      let newTelemetryOrder = [...state.telemetryCacheOrder];
+      let newTrajectoryOrder = [...state.trajectoryCacheOrder];
+      let newLapCache = { ...state.lapCache };
 
-      while (newTrajectoryOrder.length > MAX_CACHED_TRAJECTORIES) {
-        const evictLap = newTrajectoryOrder.shift()!;
-        if (newLapCache[evictLap]) {
-          if (newLapCache[evictLap].telemetry) {
-            // Keep entry but remove trajectory
+      // If we're adding telemetry data, manage LRU
+      if (data.telemetry !== undefined && data.telemetry !== null) {
+        newTelemetryOrder = newTelemetryOrder.filter((n) => n !== lapNumber);
+        newTelemetryOrder.push(lapNumber);
+
+        while (newTelemetryOrder.length > MAX_CACHED_TELEMETRY) {
+          const evictLap = newTelemetryOrder.shift()!;
+          if (newLapCache[evictLap]) {
             newLapCache = {
               ...newLapCache,
               [evictLap]: {
-                trajectory: [],
-                telemetry: newLapCache[evictLap].telemetry,
-              }
+                trajectory: newLapCache[evictLap].trajectory,
+                telemetry: null,
+              },
             };
-          } else {
-            // No telemetry either — remove entry entirely
-            const { [evictLap]: _, ...rest } = newLapCache;
-            newLapCache = rest;
           }
         }
       }
-    }
 
-    newLapCache = {
-      ...newLapCache,
-      [lapNumber]: {
-        trajectory: data.trajectory ?? current?.trajectory ?? [],
-        telemetry: newTelemetry,
+      // If we're adding trajectory data, manage LRU
+      if (data.trajectory !== undefined && data.trajectory.length > 0) {
+        newTrajectoryOrder = newTrajectoryOrder.filter((n) => n !== lapNumber);
+        newTrajectoryOrder.push(lapNumber);
+
+        while (newTrajectoryOrder.length > MAX_CACHED_TRAJECTORIES) {
+          const evictLap = newTrajectoryOrder.shift()!;
+          if (newLapCache[evictLap]) {
+            if (newLapCache[evictLap].telemetry) {
+              // Keep entry but remove trajectory
+              newLapCache = {
+                ...newLapCache,
+                [evictLap]: {
+                  trajectory: [],
+                  telemetry: newLapCache[evictLap].telemetry,
+                },
+              };
+            } else {
+              // No telemetry either — remove entry entirely
+              const { [evictLap]: _, ...rest } = newLapCache;
+              newLapCache = rest;
+            }
+          }
+        }
       }
-    };
 
-    return {
-      lapCache: newLapCache,
-      telemetryCacheOrder: newTelemetryOrder,
-      trajectoryCacheOrder: newTrajectoryOrder,
-    };
-  }),
+      newLapCache = {
+        ...newLapCache,
+        [lapNumber]: {
+          trajectory: data.trajectory ?? current?.trajectory ?? [],
+          telemetry: newTelemetry,
+        },
+      };
+
+      return {
+        lapCache: newLapCache,
+        telemetryCacheOrder: newTelemetryOrder,
+        trajectoryCacheOrder: newTrajectoryOrder,
+      };
+    }),
 
   // Touch cache entry to update LRU order (without loading new data)
-  touchCache: (lapNumber) => set((state) => {
-    if (!state.telemetryCacheOrder.includes(lapNumber)) return state;
-    return {
-      telemetryCacheOrder: [
-        ...state.telemetryCacheOrder.filter(n => n !== lapNumber),
-        lapNumber,
-      ],
-    };
-  }),
+  touchCache: (lapNumber) =>
+    set((state) => {
+      if (!state.telemetryCacheOrder.includes(lapNumber)) return state;
+      return {
+        telemetryCacheOrder: [
+          ...state.telemetryCacheOrder.filter((n) => n !== lapNumber),
+          lapNumber,
+        ],
+      };
+    }),
 
   setLoadingTrajectory: (isLoadingTrajectory) => set({ isLoadingTrajectory }),
 
@@ -222,3 +237,9 @@ export const selectSelectedLap = (state: SessionState): Lap | null => {
 
 export const selectValidLaps = (state: SessionState): Lap[] =>
   state.laps.filter((lap) => lap.isValid && lap.isComplete);
+
+/** Returns telemetry for the currently selected lap (from lapCache). */
+export const selectActiveLapTelemetry = (state: SessionState) =>
+  state.selectedLapNumber !== null
+    ? state.lapCache[state.selectedLapNumber]?.telemetry ?? null
+    : null;

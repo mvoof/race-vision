@@ -68,11 +68,22 @@ export function usePlayback({
     requestRef.current = requestAnimationFrame(animate);
   }, []);
 
-  // Start/stop the rAF loop
+  // Start/stop the rAF loop + periodic React state flush for chart/widgets
   useEffect(() => {
     if (isPlaying) {
       previousTimeRef.current = performance.now();
       requestRef.current = requestAnimationFrame(animate);
+
+      // Flush currentTime to React state every ~200ms so chart cursor, delta,
+      // lap time display, and widgets update without overwhelming React.
+      const flushInterval = setInterval(() => {
+        setCurrentTime(currentTimeRef.current);
+      }, 200);
+
+      return () => {
+        cancelAnimationFrame(requestRef.current);
+        clearInterval(flushInterval);
+      };
     }
     return () => cancelAnimationFrame(requestRef.current);
   }, [isPlaying, animate]);

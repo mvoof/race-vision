@@ -63,6 +63,9 @@ export interface CanvasRendererOptions {
   isDragging: boolean;
   corners: Corner[];
   showCorners: boolean;
+  // Follow mode
+  isFollowing?: boolean;
+  onCameraFollow?: (viewBox: { x: number; y: number; width: number; height: number }) => void;
 }
 
 /**
@@ -167,6 +170,8 @@ export function useCanvasRenderer(
   const sizeRef = useRef({ width, height });
   const worldPointsRef = useRef(opts.worldPoints);
   const extCursorDistRef = useRef(opts.cursorDistanceRef);
+  const isFollowingRef = useRef(opts.isFollowing ?? false);
+  const onCameraFollowRef = useRef(opts.onCameraFollow);
   const interactiveOptsRef = useRef({
     startPosition: opts.startPosition,
     finishPosition: opts.finishPosition,
@@ -182,6 +187,8 @@ export function useCanvasRenderer(
   sizeRef.current = { width, height };
   worldPointsRef.current = opts.worldPoints;
   extCursorDistRef.current = opts.cursorDistanceRef;
+  isFollowingRef.current = opts.isFollowing ?? false;
+  onCameraFollowRef.current = opts.onCameraFollow;
   interactiveOptsRef.current = {
     startPosition: opts.startPosition,
     finishPosition: opts.finishPosition,
@@ -210,6 +217,9 @@ export function useCanvasRenderer(
     let prevDragging = false;
     let prevCamX = NaN;
     let prevCamY = NaN;
+    let prevCamW = NaN;
+    let prevCamH = NaN;
+    let lastFollowTime = 0;
 
     /** Binary search + lerp for cursor position from distance. */
     const computeCursorFromDistance = (
@@ -257,6 +267,20 @@ export function useCanvasRenderer(
         pos = cursorPosRef.current;
       }
 
+      // Follow mode: center camera on car position (~30fps throttled)
+      if (pos && isFollowingRef.current && onCameraFollowRef.current) {
+        const now = performance.now();
+        if (now - lastFollowTime > 33) { // ~30fps
+          lastFollowTime = now;
+          onCameraFollowRef.current({
+            x: pos.x - cam.width / 2,
+            y: pos.y - cam.height / 2,
+            width: cam.width,
+            height: cam.height,
+          });
+        }
+      }
+
       const x = pos?.x ?? NaN;
       const y = pos?.y ?? NaN;
       const h = pos?.heading ?? NaN;
@@ -267,7 +291,9 @@ export function useCanvasRenderer(
         h !== prevHeading ||
         dragging !== prevDragging ||
         cam.x !== prevCamX ||
-        cam.y !== prevCamY;
+        cam.y !== prevCamY ||
+        cam.width !== prevCamW ||
+        cam.height !== prevCamH;
 
       if (!changed) {
         rafId = requestAnimationFrame(draw);
@@ -280,6 +306,8 @@ export function useCanvasRenderer(
       prevDragging = dragging;
       prevCamX = cam.x;
       prevCamY = cam.y;
+      prevCamW = cam.width;
+      prevCamH = cam.height;
 
       const w = sizeRef.current.width;
       const ht = sizeRef.current.height;

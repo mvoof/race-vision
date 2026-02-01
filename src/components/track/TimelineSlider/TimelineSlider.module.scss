@@ -156,6 +156,36 @@
   flex-shrink: 0;
 }
 
+.warmupZone {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 0;
+  border-radius: 2px 0 0 2px;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 152, 0, 0.12),
+    rgba(255, 152, 0, 0.12) 3px,
+    transparent 3px,
+    transparent 6px
+  );
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.warmupLabel {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 8px;
+  font-weight: 700;
+  color: rgba(255, 152, 0, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  user-select: none;
+}
+
 .notches {
   position: absolute;
   top: 50%;

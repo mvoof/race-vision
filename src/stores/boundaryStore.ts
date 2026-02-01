@@ -4,6 +4,8 @@ import type {
   BoundaryMode,
   BoundarySettings,
   Point2D,
+  TrackBoundaryEnvelope,
+  Corner,
 } from '../types';
 import { DEFAULT_BOUNDARY_SETTINGS } from '../types';
 import {
@@ -15,6 +17,12 @@ import {
 interface BoundaryState {
   // Current computed boundary
   computedBoundary: ComputedTrackBoundary | null;
+
+  // Track boundary envelope (from multi-file analysis)
+  envelope: TrackBoundaryEnvelope | null;
+
+  // Detected corners for current trajectory
+  corners: Corner[];
 
   // Cache of computed boundaries by track name
   boundaryCache: Map<string, ComputedTrackBoundary>;
@@ -62,11 +70,17 @@ interface BoundaryState {
   setMode: (mode: BoundaryMode) => void;
 
   toggleShowBoundaries: () => void;
+
+  // Envelope + corners
+  setEnvelope: (envelope: TrackBoundaryEnvelope | null) => void;
+  setCorners: (corners: Corner[]) => void;
 }
 
 export const useBoundaryStore = create<BoundaryState>((set, get) => ({
   // Initial state
   computedBoundary: null,
+  envelope: null,
+  corners: [],
   boundaryCache: new Map(),
   collectedTrajectories: [],
   isGenerating: false,
@@ -280,6 +294,9 @@ export const useBoundaryStore = create<BoundaryState>((set, get) => ({
       },
     }));
   },
+
+  setEnvelope: (envelope) => set({ envelope }),
+  setCorners: (corners) => set({ corners }),
 }));
 
 // Selectors
@@ -293,3 +310,5 @@ export const selectShowComputedBoundaries = (state: BoundaryState) =>
   state.settings.showBoundaries;
 export const selectCollectedTrajectoryCount = (state: BoundaryState) =>
   state.collectedTrajectories.length;
+export const selectEnvelope = (state: BoundaryState) => state.envelope;
+export const selectCorners = (state: BoundaryState) => state.corners;

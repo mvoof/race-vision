@@ -1,4 +1,10 @@
-import React, { useCallback, useMemo, useRef, useEffect, type RefObject } from 'react';
+import React, {
+  useCallback,
+  useMemo,
+  useRef,
+  useEffect,
+  type RefObject,
+} from 'react';
 import { Play, Pause, ChevronsRight } from 'lucide-react';
 import type { Lap } from '../../../types';
 import styles from './TimelineSlider.module.scss';
@@ -108,6 +114,14 @@ export function TimelineSlider({
     return labels;
   }, [duration]);
 
+  // Warmup zone: from 0 to first lap boundary
+  const warmupEnd = useMemo(() => {
+    if (laps.length === 0 || duration === 0) return 0;
+    return laps[0].startTimestamp;
+  }, [laps, duration]);
+
+  const warmupPct = duration > 0 ? (warmupEnd / duration) * 100 : 0;
+
   return (
     <div className={styles.container}>
       <div className={styles.controlsRow}>
@@ -135,6 +149,15 @@ export function TimelineSlider({
 
         <div className={styles.sliderContainer}>
           <div className={styles.sliderTrack}>
+            {warmupPct > 0 && (
+              <div
+                className={styles.warmupZone}
+                style={{ width: `${warmupPct}%` }}
+                title="Warmup lap"
+              >
+                <span className={styles.warmupLabel}>W</span>
+              </div>
+            )}
             <div className={styles.notches}>
               {laps.map((lap) => (
                 <div

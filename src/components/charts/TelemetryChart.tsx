@@ -12,23 +12,23 @@ import {
   ReferenceLine,
 } from 'recharts';
 import type { TelemetrySample } from '../../types';
+import { useTrackViewStore } from '../../stores/trackViewStore';
 import styles from './TelemetryChart.module.scss';
 
 export interface TelemetryChartProps {
   data: TelemetrySample[];
-  cursorDistance: number | null;
-  onCursorChange: (distance: number | null) => void;
   height?: number | string;
   syncId?: string;
 }
 
 export function TelemetryChart({
   data,
-  cursorDistance,
-  onCursorChange,
   height = 300,
   syncId = 'telemetry',
 }: TelemetryChartProps) {
+  const cursorDistance = useTrackViewStore((s) => s.cursorDistance);
+  const setCursorDistance = useTrackViewStore((s) => s.setCursorDistance);
+
   // Memoize data to avoid unnecessary re-renders
   const chartData = useMemo(() => data, [data]);
 
@@ -36,14 +36,13 @@ export function TelemetryChart({
     (state: any) => {
       if (state && state.activePayload && state.activePayload.length > 0) {
         const distance = state.activePayload[0].payload.lapDistance;
-        onCursorChange(distance);
+        setCursorDistance(distance);
       }
     },
-    [onCursorChange]
+    [setCursorDistance]
   );
 
   const handleMouseLeave = useCallback(() => {
-    // We might want to keep the cursor at the last position or hide it
     // onCursorChange(null);
   }, []);
 
