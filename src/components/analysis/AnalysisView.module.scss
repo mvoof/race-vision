@@ -99,12 +99,12 @@
 }
 
 .trackSection {
-  // Map takes available space but has a healthy minimum to ensure visibility
-  flex: 1;
+  // Track maintains fixed size; leftColumn scrolls when chart expands
+  flex: 0 0 auto;
+  height: 600px; // Fixed height for track section
   min-height: 400px; 
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
 }
 
 .trackPanel {
