@@ -4,8 +4,15 @@ import type {
   BoundaryGeneratorOptions,
   BoundarySegment,
   Point2D,
-  ReferenceLine,
+  FrenetPoint,
 } from '../../types';
+
+export type {
+  ComputedTrackBoundary,
+  BoundaryGeneratorOptions,
+  BoundarySegment,
+};
+
 import {
   createReferenceLine,
   toFrenet,
@@ -152,7 +159,7 @@ export function addTrajectoryToBoundary(
   };
   const { referenceLine, segments } = existingBoundary;
 
-  const frenetPoints = [];
+  const frenetPoints: FrenetPoint[] = [];
   for (const point of newTrajectory) {
     const frenet = toFrenet(point, referenceLine);
     if (Math.abs(frenet.d) <= opts.outlierThreshold) {

@@ -48,14 +48,14 @@ interface BoundaryState {
     trajectories: Point2D[][],
     trackName: string,
     trackLayout?: string
-  ) => void;
+  ) => Promise<void>;
 
   addTrajectory: (trajectory: Point2D[]) => void;
 
   generateFromCollectedTrajectories: (
     trackName: string,
     trackLayout?: string
-  ) => void;
+  ) => Promise<void>;
 
   clearCollectedTrajectories: () => void;
 
@@ -128,7 +128,7 @@ export const useBoundaryStore = create<BoundaryState>((set, get) => ({
     }
   },
 
-  generateBoundaryFromMultipleTrajectories: (
+  generateBoundaryFromMultipleTrajectories: async (
     trajectories: Point2D[][],
     trackName: string,
     trackLayout: string = ''
@@ -137,7 +137,7 @@ export const useBoundaryStore = create<BoundaryState>((set, get) => ({
 
     try {
       const { settings } = get();
-      const boundary = generateBoundariesFromTrajectories(
+      const boundary = await generateBoundariesFromTrajectories(
         trajectories,
         trackName,
         trackLayout,
@@ -199,7 +199,7 @@ export const useBoundaryStore = create<BoundaryState>((set, get) => ({
     }
   },
 
-  generateFromCollectedTrajectories: (
+  generateFromCollectedTrajectories: async (
     trackName: string,
     trackLayout: string = ''
   ) => {
@@ -213,7 +213,7 @@ export const useBoundaryStore = create<BoundaryState>((set, get) => ({
     set({ isGenerating: true, error: null });
 
     try {
-      const boundary = generateBoundariesFromTrajectories(
+      const boundary = await generateBoundariesFromTrajectories(
         collectedTrajectories,
         trackName,
         trackLayout,

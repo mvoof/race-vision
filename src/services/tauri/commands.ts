@@ -15,6 +15,8 @@ import type {
   CursorPosition,
   EnvelopeWorldPoints,
   TrackBoundaryPoint,
+  TrackBoundaryEnvelope,
+  Point2D,
 } from '../../types';
 
 /**

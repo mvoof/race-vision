@@ -2,13 +2,10 @@ import React, { useState, useMemo, useCallback, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Search,
-  Settings,
-  ChevronDown,
-  FolderOpen,
   Activity,
-  Calendar,
-  Clock,
-  Database,
+  FolderOpen,
+  ChevronDown,
+  Settings,
 } from 'lucide-react';
 import {
   useSettingsStore,
@@ -20,7 +17,7 @@ import {
   loadTelemetryFile,
   analyzeTrackBoundaries,
 } from '../../services/tauri';
-import { formatDate } from '../../utils/dateFormat';
+
 import type { TelemetryFileInfo } from '../../types';
 import { Button } from '../common';
 import styles from './SessionDashboard.module.scss';

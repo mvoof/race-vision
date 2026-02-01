@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { TelemetryFileInfo } from '../types';
-import { useSettingsStore } from './settingsStore';
+
 import { getFirstLetter, getDatePeriod } from '../utils/dateFormat';
 
 interface DashboardState {

@@ -1,7 +1,7 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { Calendar, Clock, Database } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { formatDate } from '../../utils/dateFormat';
+import { formatDate, DateFormat } from '../../utils/dateFormat';
 import type { TelemetryFileInfo } from '../../types';
 import { Card, CardHeader, CardBody, CardFooter } from '../common';
 import styles from './SessionDashboard.module.scss'; // Keeping specific styles for content
@@ -10,7 +10,7 @@ interface SessionCardProps {
   file: TelemetryFileInfo;
   onClick: (file: TelemetryFileInfo) => void;
   isLoading?: boolean;
-  dateFormat: string;
+  dateFormat: DateFormat;
 }
 
 export const SessionCard = memo(function SessionCard({

@@ -1,4 +1,4 @@
-import React from 'react';
+
 import type { Lap } from '../../../types';
 import styles from './LapList.module.scss';
 
