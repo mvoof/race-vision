@@ -2,6 +2,23 @@
 @use 'variables' as *;
 @use 'mixins' as *;
 
+:root {
+  // Map SCSS variables to CSS variables for component modules
+  --surface-card: #{$bg-card};
+  --border-subtle: #{$border-color};
+  --border-focus: #{$border-active};
+  
+  --radius-md: #{$border-radius-md};
+  
+  --spacing-xs: #{$spacing-xs};
+  --spacing-sm: #{$spacing-sm};
+  --spacing-md: #{$spacing-md};
+  
+  --shadow-md: #{$shadow-md};
+  
+  --text-tertiary: #{$text-muted};
+}
+
 *,
 *::before,
 *::after {

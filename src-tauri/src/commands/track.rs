@@ -254,7 +254,7 @@ fn to_frenet(point: &Point2D, line: &ReferenceLine) -> FrenetPoint {
     
     // Determine sign of d (cross product)
     let (p_prev, p_next) = if idx == 0 {
-        (p_close, &line.points.get(1).unwrap_or(p_close))
+        (p_close, line.points.get(1).unwrap_or(p_close))
     } else if idx == line.points.len() - 1 {
          (&line.points[idx-1], p_close)
     } else {

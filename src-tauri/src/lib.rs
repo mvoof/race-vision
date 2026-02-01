@@ -30,7 +30,12 @@ pub fn run() {
             scan_telemetry_folder,
             analyze_track_boundaries,
             commands::analysis::analyze_corners,
-            commands::track::generate_boundaries
+            commands::track::generate_boundaries,
+            commands::visualization::prepare_track_view,
+            commands::visualization::find_nearest_point,
+            commands::visualization::interpolate_cursor_position,
+            commands::visualization::generate_offset_boundaries,
+            commands::visualization::transform_envelope_points
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
