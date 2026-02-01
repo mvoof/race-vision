@@ -20,6 +20,8 @@ export interface TelemetryChartProps {
   height?: number | string;
   syncId?: string;
   onCursorChange?: (distance: number | null) => void;
+  zoomRange?: { start: number; end: number } | null;
+  onZoomChange?: (range: { start: number; end: number } | null) => void;
 }
 
 export function TelemetryChart({
@@ -27,6 +29,8 @@ export function TelemetryChart({
   height = 300,
   syncId = 'telemetry',
   onCursorChange,
+  zoomRange,
+  onZoomChange,
 }: TelemetryChartProps) {
   const cursorDistance = useTrackViewStore((s) => s.cursorDistance);
   const setCursorDistance = useTrackViewStore((s) => s.setCursorDistance);
@@ -58,6 +62,50 @@ export function TelemetryChart({
     // We don't necessarily clear store cursor on leave to keep the last position visible, 
     // but if the parent wants to clear it, it can.
   }, [onCursorChange]);
+
+  // Compute brush indices from distance range
+  const brushIndices = useMemo(() => {
+    if (!zoomRange || data.length === 0) {
+      return { startIndex: 0, endIndex: data.length - 1 };
+    }
+
+    let startIndex = data.findIndex((s) => s.lapDistance >= zoomRange.start);
+    let endIndex = data.findIndex((s) => s.lapDistance >= zoomRange.end);
+
+    // Handle edge cases
+    if (startIndex < 0) startIndex = 0;
+    if (endIndex < 0) endIndex = data.length - 1;
+
+    return { startIndex, endIndex };
+  }, [zoomRange, data]);
+
+  // Handle brush change
+  const handleBrushChange = useCallback(
+    (brushData: any) => {
+      if (!onZoomChange || !brushData) return;
+
+      const { startIndex, endIndex } = brushData;
+      if (
+        startIndex === undefined ||
+        endIndex === undefined ||
+        !data[startIndex] ||
+        !data[endIndex]
+      ) {
+        return;
+      }
+
+      // If full range, clear zoom
+      if (startIndex === 0 && endIndex === data.length - 1) {
+        onZoomChange(null);
+      } else {
+        onZoomChange({
+          start: data[startIndex].lapDistance,
+          end: data[endIndex].lapDistance,
+        });
+      }
+    },
+    [onZoomChange, data]
+  );
 
   return (
     <div className={styles.chartContainer} style={{ height }}>
@@ -176,6 +224,9 @@ export function TelemetryChart({
             stroke="#333"
             fill="#1e1e1e"
             tickFormatter={() => ''}
+            startIndex={brushIndices.startIndex}
+            endIndex={brushIndices.endIndex}
+            onChange={handleBrushChange}
           />
         </LineChart>
       </ResponsiveContainer>

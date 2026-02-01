@@ -50,6 +50,8 @@ interface TrackCanvasProps {
   currentLapNumber?: number | null;
   deltaTime?: number | null;
   onDistanceHover?: (distance: number | null) => void;
+  /** Called when the visible distance range changes due to zoom/pan */
+  onZoomDistanceChange?: (range: { start: number; end: number } | null) => void;
   className?: string;
 }
 
@@ -87,6 +89,7 @@ export function TrackCanvas({
   currentLapNumber = null,
   deltaTime = null,
   onDistanceHover,
+  onZoomDistanceChange,
   className,
 }: TrackCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -281,6 +284,39 @@ export function TrackCanvas({
     },
     [setViewBox]
   );
+
+  // Compute and emit visible distance range when viewBox changes
+  useEffect(() => {
+    if (!trackViewData || !onZoomDistanceChange) {
+      return;
+    }
+
+    // If no viewBox (full zoom out), emit null to clear zoom
+    if (!viewBox) {
+      onZoomDistanceChange(null);
+      return;
+    }
+
+    // Find trajectory points visible in current viewBox
+    const visiblePoints = trackViewData.worldPoints.filter(
+      (p) =>
+        p.x >= viewBox.x &&
+        p.x <= viewBox.x + viewBox.width &&
+        p.y >= viewBox.y &&
+        p.y <= viewBox.y + viewBox.height
+    );
+
+    if (visiblePoints.length === 0) {
+      onZoomDistanceChange(null);
+      return;
+    }
+
+    const minDist = visiblePoints[0].distance;
+    const maxDist = visiblePoints[visiblePoints.length - 1].distance;
+
+    onZoomDistanceChange({ start: minDist, end: maxDist });
+  }, [viewBox, trackViewData, onZoomDistanceChange]);
+
 
   // --- Render via hook ---
   useCanvasRenderer(staticRef, dynamicRef, interactiveRef, {

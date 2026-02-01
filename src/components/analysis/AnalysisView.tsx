@@ -188,6 +188,8 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
   const setTelemetrySample = useTrackViewStore((s) => s.setTelemetrySample);
   const showLayoutControls = useTrackViewStore((s) => s.showLayoutControls);
   const setShowLayoutControls = useTrackViewStore((s) => s.setShowLayoutControls);
+  const zoomDistanceRange = useTrackViewStore((s) => s.zoomDistanceRange);
+  const setZoomDistanceRange = useTrackViewStore((s) => s.setZoomDistanceRange);
 
   // ── Boundary Store ──
   const envelope = useBoundaryStore((s) => s.envelope);
@@ -499,6 +501,14 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
       seek(absoluteTime);
     },
     [laps, selectedLapNumber, lapCache, lapTelemetry, seek]
+  );
+
+  // Zoom synchronization handlers
+  const handleZoomDistanceChange = useCallback(
+    (range: { start: number; end: number } | null) => {
+      setZoomDistanceRange(range);
+    },
+    [setZoomDistanceRange]
   );
 
   // Sync state when playback stops so manual interaction picks up the right position
@@ -909,6 +919,7 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
                       currentLapNumber={selectedLapNumber}
                       deltaTime={deltaValue}
                       onDistanceHover={handleDistanceChange}
+                      onZoomDistanceChange={handleZoomDistanceChange}
                     />
                   ) : (
                     <div className={styles.placeholder}>
@@ -929,6 +940,8 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
                   data={lapTelemetry.samples}
                   height="100%"
                   onCursorChange={handleDistanceChange}
+                  zoomRange={zoomDistanceRange}
+                  onZoomChange={handleZoomDistanceChange}
                 />
               ) : (
                 <div className={styles.noData}>{t('hoverOverTrack')}</div>

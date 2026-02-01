@@ -30,6 +30,9 @@ interface TrackViewState {
   // UI toggles
   showLayoutControls: boolean;
 
+  // Zoom synchronization (distance-based range visible on track/charts)
+  zoomDistanceRange: { start: number; end: number } | null;
+
   // Actions
   setViewBox: (viewBox: ViewBox | null) => void;
   setIsFollowing: (isFollowing: boolean) => void;
@@ -41,6 +44,7 @@ interface TrackViewState {
   setTelemetrySample: (sample: TelemetrySample | null) => void;
   setShowLayoutControls: (show: boolean) => void;
   toggleLayoutControls: () => void;
+  setZoomDistanceRange: (range: { start: number; end: number } | null) => void;
 
   // Reset interaction state (e.g. on mouse leave)
   resetInteraction: () => void;
@@ -56,6 +60,7 @@ export const useTrackViewStore = create<TrackViewState>((set) => ({
   cursorDistance: null,
   telemetrySample: null,
   showLayoutControls: false,
+  zoomDistanceRange: null,
 
   // Actions
   setViewBox: (viewBox) => set({ viewBox }),
@@ -69,6 +74,7 @@ export const useTrackViewStore = create<TrackViewState>((set) => ({
   setShowLayoutControls: (showLayoutControls) => set({ showLayoutControls }),
   toggleLayoutControls: () =>
     set((s) => ({ showLayoutControls: !s.showLayoutControls })),
+  setZoomDistanceRange: (zoomDistanceRange) => set({ zoomDistanceRange }),
 
   resetInteraction: () =>
     set({ isPanning: false, isDraggingCursor: false }),
