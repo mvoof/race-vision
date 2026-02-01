@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Calendar, Clock, Database } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '../../utils/dateFormat';
 import type { TelemetryFileInfo } from '../../types';
-import styles from './SessionDashboard.module.scss'; // Temporarily sharing styles or I should duplicate/move
+import { Card, CardHeader, CardBody, CardFooter } from '../common';
+import styles from './SessionDashboard.module.scss'; // Keeping specific styles for content
 
 interface SessionCardProps {
   file: TelemetryFileInfo;
@@ -12,7 +13,7 @@ interface SessionCardProps {
   dateFormat: string;
 }
 
-export function SessionCard({
+export const SessionCard = memo(function SessionCard({
   file,
   onClick,
   isLoading = false,
@@ -21,19 +22,18 @@ export function SessionCard({
   const { t } = useTranslation();
 
   return (
-    <div
-      className={`${styles.sessionCard} ${isLoading ? styles.disabled : ''}`}
-      onClick={() => !isLoading && onClick(file)}
-      role="button"
-      tabIndex={0}
+    <Card
+      onClick={() => onClick(file)}
+      disabled={isLoading}
+      className={styles.sessionCardWrapper} // Use wrapper class if needed or inline styles
     >
-      <div className={styles.cardHeader}>
+      <CardHeader>
         <span className={styles.trackName}>
           {file.trackName || t('unknownTrack')}
         </span>
-      </div>
+      </CardHeader>
 
-      <div className={styles.cardBody}>
+      <CardBody>
         <div className={styles.infoRow}>
           <Database size={14} />
           <span>{file.carName || t('unknownCar')}</span>
@@ -42,15 +42,15 @@ export function SessionCard({
           <Clock size={14} />
           <span>{file.sessionType || 'Session'}</span>
         </div>
-      </div>
+      </CardBody>
 
-      <div className={styles.cardFooter}>
+      <CardFooter>
         <div className={styles.date}>
           <Calendar size={12} />
           {formatDate(file.modifiedTime, dateFormat)}
         </div>
         <div className={styles.arrow}>→</div>
-      </div>
-    </div>
+      </CardFooter>
+    </Card>
   );
-}
+});

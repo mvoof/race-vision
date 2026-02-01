@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Search,
@@ -23,8 +23,10 @@ import {
 import { formatDate } from '../../utils/dateFormat';
 import type { TelemetryFileInfo } from '../../types';
 import { Button } from '../common';
-import { SessionCard } from './SessionCard';
 import styles from './SessionDashboard.module.scss';
+
+// Lazy load SessionCard
+const SessionCard = lazy(() => import('./SessionCard').then(module => ({ default: module.SessionCard })));
 
 interface SessionDashboardProps {
   onNavigateToAnalysis: () => void;
@@ -292,15 +294,17 @@ export function SessionDashboard({
               <div key={group.key} className={styles.groupSection}>
                 <h3 className={styles.groupHeader}>{group.label}</h3>
                 <div className={styles.cardsGrid}>
-                  {group.files.map((file) => (
-                    <SessionCard
-                      key={file.path}
-                      file={file}
-                      onClick={handleFileSelect}
-                      isLoading={isLoading}
-                      dateFormat={dateFormat}
-                    />
-                  ))}
+                  <Suspense fallback={<div className={styles.cardSkeleton} />}>
+                    {group.files.map((file) => (
+                      <SessionCard
+                        key={file.path}
+                        file={file}
+                        onClick={handleFileSelect}
+                        isLoading={isLoading}
+                        dateFormat={dateFormat}
+                      />
+                    ))}
+                  </Suspense>
                 </div>
               </div>
             ))}
