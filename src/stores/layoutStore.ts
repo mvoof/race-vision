@@ -27,6 +27,9 @@ interface LayoutState {
   // Widget Panel Width
   panelWidth: number;
 
+  // Track section height
+  trackSectionHeight: number;
+
   // Chart drawer height (below track map)
   chartDrawerHeight: number;
 
@@ -36,6 +39,7 @@ interface LayoutState {
   // Actions
   setPreset: (preset: LayoutPreset) => void;
   setPanelWidth: (width: number) => void;
+  setTrackSectionHeight: (height: number) => void;
   setChartDrawerHeight: (height: number) => void;
   updateLayout: (preset: LayoutPreset, layouts: WidgetLayout[]) => void;
   toggleWidgetVisibility: (widgetId: string) => void;
@@ -88,6 +92,7 @@ export const useLayoutStore = create<LayoutState>()(
     (set, get) => ({
       currentPreset: 'advanced',
       panelWidth: 480,
+      trackSectionHeight: 600,
       chartDrawerHeight: 200,
       layouts: {
         beginner: [...defaultPresets.beginner],
@@ -102,6 +107,10 @@ export const useLayoutStore = create<LayoutState>()(
 
       setPanelWidth: (width) => {
         set({ panelWidth: width });
+      },
+
+      setTrackSectionHeight: (height) => {
+        set({ trackSectionHeight: height });
       },
 
       setChartDrawerHeight: (height) => {

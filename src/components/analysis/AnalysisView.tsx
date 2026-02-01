@@ -168,10 +168,12 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
   const {
     currentPreset,
     panelWidth,
+    trackSectionHeight,
     chartDrawerHeight,
     layouts,
     setPreset,
     setPanelWidth,
+    setTrackSectionHeight,
     setChartDrawerHeight,
     updateLayout,
     toggleWidgetVisibility,
@@ -298,6 +300,54 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
       document.body.style.userSelect = 'none';
     },
     [handleCornerMouseMove, stopCornerResizing, chartDrawerHeight, panelWidth]
+  );
+
+  // Track Section Resizer (Height only)
+  const [isTrackResizing, setIsTrackResizing] = useState(false);
+  const trackResizingRef = useRef(false);
+  const trackStartRef = useRef({ y: 0, h: 0 });
+
+  const handleTrackMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!trackResizingRef.current) return;
+      const dy = e.clientY - trackStartRef.current.y;
+
+      // Height change (Track Section)
+      const newHeight = trackStartRef.current.h + dy;
+      const clampedHeight = Math.max(
+        400,
+        Math.min(newHeight, window.innerHeight * 0.8)
+      );
+      setTrackSectionHeight(clampedHeight);
+    },
+    [setTrackSectionHeight]
+  );
+
+  const stopTrackResizing = useCallback(() => {
+    setIsTrackResizing(false);
+    trackResizingRef.current = false;
+    document.removeEventListener('mousemove', handleTrackMouseMove);
+    document.removeEventListener('mouseup', stopTrackResizing);
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }, [handleTrackMouseMove]);
+
+  const startTrackResizing = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsTrackResizing(true);
+      trackResizingRef.current = true;
+      trackStartRef.current = {
+        y: e.clientY,
+        h: trackSectionHeight,
+      };
+      document.addEventListener('mousemove', handleTrackMouseMove);
+      document.addEventListener('mouseup', stopTrackResizing);
+      document.body.style.cursor = 'ns-resize';
+      document.body.style.userSelect = 'none';
+    },
+    [handleTrackMouseMove, stopTrackResizing, trackSectionHeight]
   );
 
   // Playback Logic
@@ -859,7 +909,7 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
           {/* Left Column: Track Map + Telemetry Chart */}
           <div className={styles.leftColumn}>
             {/* Track Map Section */}
-            <div className={styles.trackSection}>
+            <div className={styles.trackSection} style={{ height: trackSectionHeight }}>
               <Panel
                 title="Track Map"
                 icon={<MapIcon size={16} />}
@@ -928,6 +978,16 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
                   )}
                 </div>
               </Panel>
+              {/* Track Resize Handle */}
+              <div
+                className={`${styles.resizeHandle} ${styles.trackResizeHandle} ${
+                  isTrackResizing ? styles.resizing : ''
+                }`}
+                onMouseDown={startTrackResizing}
+                role="separator"
+                aria-label="Resize track"
+                tabIndex={0}
+              />
             </div>
 
             {/* Telemetry Chart Section (Resizable) */}

@@ -99,12 +99,12 @@
 }
 
 .trackSection {
-  // Track maintains fixed size; leftColumn scrolls when chart expands
+  // Track maintains size via inline style; leftColumn scrolls when needed
   flex: 0 0 auto;
-  height: 600px; // Fixed height for track section
   min-height: 400px; 
   display: flex;
   flex-direction: column;
+  position: relative; // For absolute positioned resize handle
 }
 
 .trackPanel {
@@ -131,24 +131,50 @@
   height: 20px;
   cursor: nwse-resize;
   z-index: 20;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-  padding: 2px;
+  background: transparent;
+  opacity: 0.3;
+  transition: opacity $transition-fast;
 
   &::after {
     content: '';
-    width: 0;
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid $text-secondary;
+    border-bottom: 2px solid $text-secondary;
+    transition: all $transition-fast;
+  }
+
+  &:hover,
+  &.resizing {
+    opacity: 1;
+
+    &::after {
+      border-color: $accent-primary;
+      width: 10px;
+      height: 10px;
+    }
+  }
+}
+
+// Track resize handle variant (bottom-right corner, vertical resize only)
+.trackResizeHandle {
+  cursor: ns-resize;
+  
+  &::after {
+    // Horizontal line indicator for vertical resize
+    border-right: none;
+    border-bottom: 2px solid $text-secondary;
+    width: 12px;
     height: 0;
-    border-style: solid;
-    border-width: 0 0 10px 10px;
-    border-color: transparent transparent rgba($text-muted, 0.3) transparent;
-    transition: border-color 0.2s;
   }
 
   &:hover::after,
   &.resizing::after {
-    border-color: transparent transparent $accent-primary transparent;
+    border-color: $accent-primary;
+    width: 14px;
   }
 }
 
