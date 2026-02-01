@@ -159,6 +159,52 @@ export interface SVGViewport {
   viewBox: string;
 }
 
+/**
+ * Точка в мировых координатах (SVG/Canvas) с данными телеметрии
+ */
+export interface WorldPoint extends Point2D {
+  speed: number;
+  distance: number;
+  throttle: number | null;
+  brake: number | null;
+}
+
+/**
+ * Данные для отрисовки трека, подготовленные на бэкенде
+ */
+export interface TrackViewData {
+  worldPoints: WorldPoint[];
+  colors: string[];
+  bounds: GeoBounds;
+  scale: number;
+  offsetX: number;
+  offsetY: number;
+}
+
+/**
+ * Границы со смещением (left/right)
+ */
+export interface OffsetBoundaries {
+  left: Point2D[];
+  right: Point2D[];
+}
+
+/**
+ * Позиция курсора на треке
+ */
+export interface CursorPosition extends Point2D {
+  heading: number;
+}
+
+/**
+ * Точки envelope в мировых координатах
+ */
+export interface EnvelopeWorldPoints {
+  inner: Point2D[];
+  outer: Point2D[];
+  center: Point2D[];
+}
+
 // ============================================
 // Computed Boundary Types (Frenet-based)
 // ============================================
@@ -218,6 +264,14 @@ export interface ComputedTrackBoundary {
   rightBoundary: Point2D[];
   totalLaps: number;
   updatedAt: string;
+}
+
+export interface BoundaryGeneratorOptions {
+  segmentSize: number;
+  fallbackWidth: number;
+  smoothWindow: number;
+  minSamplesPerSegment: number;
+  outlierThreshold: number;
 }
 
 /**

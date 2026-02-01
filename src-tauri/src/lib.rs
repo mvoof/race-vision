@@ -9,6 +9,7 @@ use db::AppState;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut builder = tauri::Builder::default()
+        .plugin(tauri_plugin_devtools::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_store::Builder::default().build());
@@ -28,7 +29,8 @@ pub fn run() {
             get_trajectory,
             scan_telemetry_folder,
             analyze_track_boundaries,
-            analysis::analyze_corners,
+            commands::analysis::analyze_corners,
+            commands::track::generate_boundaries
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

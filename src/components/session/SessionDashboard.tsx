@@ -10,17 +10,17 @@ import {
   Clock,
   Database,
 } from 'lucide-react';
-import { useSettingsStore, useSessionStore } from '../../stores';
+import {
+  useSettingsStore,
+  useSessionStore,
+  useDashboardStore,
+} from '../../stores';
 import {
   openAndLoadTelemetryFile,
   loadTelemetryFile,
   analyzeTrackBoundaries,
 } from '../../services/tauri';
-import {
-  formatDate,
-  getDatePeriod,
-  getFirstLetter,
-} from '../../utils/dateFormat';
+import { formatDate } from '../../utils/dateFormat';
 import type { TelemetryFileInfo } from '../../types';
 import { Button } from '../common';
 import styles from './SessionDashboard.module.scss';
@@ -57,73 +57,29 @@ export function SessionDashboard({
     error,
   } = useSessionStore();
 
-  // Local state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'date' | 'name' | 'track'>('date');
+  const {
+    searchQuery,
+    sortBy,
+    setSearchQuery,
+    setSortBy,
+    getFilteredFiles,
+    getGroupedFiles,
+  } = useDashboardStore();
+
+  // Local state for UI only
   const [isDragOver, setIsDragOver] = useState(false);
 
   // Filter and Sort Logic
-  const filteredFiles = useMemo(() => {
-    let files = [...telemetryFiles];
-
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      files = files.filter(
-        (file) =>
-          file.fileName.toLowerCase().includes(query) ||
-          file.trackName?.toLowerCase().includes(query) ||
-          file.carName?.toLowerCase().includes(query) ||
-          file.driverName?.toLowerCase().includes(query)
-      );
-    }
-
-    files.sort((a, b) => {
-      switch (sortBy) {
-        case 'name':
-          return a.fileName.localeCompare(b.fileName);
-        case 'track':
-          return (a.trackName || '').localeCompare(b.trackName || '');
-        case 'date':
-        default:
-          return b.modifiedTime - a.modifiedTime;
-      }
-    });
-
-    return files;
-  }, [telemetryFiles, searchQuery, sortBy]);
+  const filteredFiles = useMemo(
+    () => getFilteredFiles(telemetryFiles),
+    [telemetryFiles, searchQuery, sortBy, getFilteredFiles]
+  );
 
   // Grouping Logic
-  const groupedFiles = useMemo(() => {
-    const groups: { key: string; label: string; files: TelemetryFileInfo[] }[] =
-      [];
-    const groupMap = new Map<string, TelemetryFileInfo[]>();
-
-    filteredFiles.forEach((file) => {
-      let groupKey: string;
-      switch (sortBy) {
-        case 'name':
-          groupKey = getFirstLetter(file.fileName);
-          break;
-        case 'track':
-          groupKey = getFirstLetter(file.trackName || '');
-          break;
-        case 'date':
-        default:
-          groupKey = getDatePeriod(file.modifiedTime, t);
-          break;
-      }
-      if (!groupMap.has(groupKey)) {
-        groupMap.set(groupKey, []);
-      }
-      groupMap.get(groupKey)!.push(file);
-    });
-
-    groupMap.forEach((files, key) => {
-      groups.push({ key, label: key, files });
-    });
-
-    return groups;
-  }, [filteredFiles, sortBy, t]);
+  const groupedFiles = useMemo(
+    () => getGroupedFiles(filteredFiles, t),
+    [filteredFiles, sortBy, t, getGroupedFiles]
+  );
 
   // Handlers
   const handleOpenFile = useCallback(async () => {

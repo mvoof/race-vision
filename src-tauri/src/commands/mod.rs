@@ -7,6 +7,8 @@ use crate::db::AppState;
 use crate::models::{Lap, LapTelemetry, Session, TelemetryFileInfo, TrajectoryPoint, TrackBoundaryEnvelope, TrackBoundaryPoint};
 
 pub mod analysis;
+pub mod visualization;
+pub mod track;
 
 /// Открыть файл телеметрии
 #[tauri::command]

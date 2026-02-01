@@ -6,8 +6,15 @@ import type {
   LapTelemetry,
   TrajectoryPoint,
   TelemetryFileInfo,
-  TrackBoundaryEnvelope,
+  ComputedTrackBoundary,
+  BoundaryGeneratorOptions,
   Corner,
+  TrackViewData,
+  WorldPoint,
+  OffsetBoundaries,
+  CursorPosition,
+  EnvelopeWorldPoints,
+  TrackBoundaryPoint,
 } from '../../types';
 
 /**
@@ -147,4 +154,114 @@ export async function analyzeCorners(
   trajectory: TrajectoryPoint[]
 ): Promise<Corner[]> {
   return invoke<Corner[]>('analyze_corners', { trajectory });
+}
+
+/**
+ * Generate boundaries from trajectories (Rust backend)
+ */
+export async function generateBoundaries(
+  trajectories: Point2D[][],
+  trackName: string,
+  trackLayout: string = '',
+  options: Partial<BoundaryGeneratorOptions> = {}
+): Promise<ComputedTrackBoundary | null> {
+  return invoke<ComputedTrackBoundary | null>('generate_boundaries', {
+    trajectories,
+    trackName,
+    trackLayout,
+    options,
+  });
+}
+
+// ─── Visualization Commands ─────────────────────────────────
+
+/**
+ * Подготовить данные для отрисовки трека (bounds, Mercator, colors)
+ */
+export async function prepareTrackView(
+  trajectory: TrajectoryPoint[],
+  canvasWidth: number,
+  canvasHeight: number,
+  padding: number,
+  colorMode: string,
+  trackColor: string
+): Promise<TrackViewData> {
+  return invoke<TrackViewData>('prepare_track_view', {
+    trajectory,
+    canvasWidth,
+    canvasHeight,
+    padding,
+    colorMode,
+    trackColor,
+  });
+}
+
+/**
+ * Найти ближайшую точку на траектории к координатам мыши
+ */
+export async function findNearestPoint(
+  worldPoints: WorldPoint[],
+  worldX: number,
+  worldY: number
+): Promise<number> {
+  return invoke<number>('find_nearest_point', {
+    worldPoints,
+    worldX,
+    worldY,
+  });
+}
+
+/**
+ * Интерполировать позицию курсора по дистанции
+ */
+export async function interpolateCursorPosition(
+  worldPoints: WorldPoint[],
+  distance: number
+): Promise<CursorPosition | null> {
+  return invoke<CursorPosition | null>('interpolate_cursor_position', {
+    worldPoints,
+    distance,
+  });
+}
+
+/**
+ * Генерировать границы со смещением от осевой линии
+ */
+export async function generateOffsetBoundaries(
+  worldPoints: WorldPoint[],
+  offset: number
+): Promise<OffsetBoundaries> {
+  return invoke<OffsetBoundaries>('generate_offset_boundaries', {
+    worldPoints,
+    offset,
+  });
+}
+
+/**
+ * Трансформировать точки envelope в мировые координаты
+ */
+export async function transformEnvelopePoints(
+  points: TrackBoundaryPoint[],
+  minLon: number,
+  minLat: number,
+  maxLat: number,
+  canvasWidth: number,
+  canvasHeight: number,
+  padding: number,
+  scale: number,
+  offsetX: number,
+  offsetY: number
+): Promise<EnvelopeWorldPoints> {
+  return invoke<EnvelopeWorldPoints>('transform_envelope_points', {
+    points,
+    minLon,
+    minLat,
+    maxLat,
+    canvasWidth,
+    canvasHeight,
+    padding,
+    scale,
+    offsetX,
+    offsetY,
+  });
 }
