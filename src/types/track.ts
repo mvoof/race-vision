@@ -1,0 +1,398 @@
+/**
+ * Границы координат трека
+ */
+export interface TrackBounds {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+}
+
+/**
+ * Точка на треке
+ */
+export interface TrackPoint {
+  x: number;
+  y: number;
+  distance: number; // distance from start line
+}
+
+/**
+ * Граница сектора
+ */
+export interface SectorBoundary {
+  sectorNumber: 1 | 2 | 3;
+  startDistance: number;
+  endDistance: number;
+  position: TrackPoint;
+}
+
+/**
+ * Данные трека для отрисовки
+ */
+export interface TrackData {
+  id: string;
+  name: string;
+  layout: string;
+  length: number; // meters
+
+  // Геометрия (из первого круга или референсного)
+  centerLine: TrackPoint[];
+  bounds: TrackBounds;
+
+  // Секторы
+  sectors: SectorBoundary[];
+
+  // Опционально: точки интереса
+  startFinishLine?: TrackPoint;
+  pitEntry?: TrackPoint;
+  pitExit?: TrackPoint;
+}
+
+/**
+ * Геометрия для Canvas рендеринга
+ */
+export interface TrackGeometry {
+  // Нормализованные точки (0-1 диапазон)
+  normalizedPoints: { x: number; y: number }[];
+
+  // Параметры трансформации для Canvas
+  scale: number;
+  offsetX: number;
+  offsetY: number;
+
+  // Исходные bounds
+  bounds: TrackBounds;
+}
+
+/**
+ * Опции отрисовки трека
+ */
+export interface TrackRenderOptions {
+  showSpeedHeatmap: boolean;
+  showBrakingZones: boolean;
+  showThrottleZones: boolean;
+  showSectors: boolean;
+  showCornerNumbers: boolean;
+  trajectoryWidth: number;
+  backgroundColor: string;
+  trackOutlineColor: string;
+  trackOutlineWidth: number;
+}
+
+// ============================================
+// GeoJSON Types for Track Boundaries
+// ============================================
+
+/**
+ * GeoJSON geometry type for LineString
+ */
+export interface GeoJSONLineString {
+  type: 'LineString';
+  coordinates: [number, number][]; // [longitude, latitude][]
+}
+
+/**
+ * GeoJSON feature
+ */
+export interface GeoJSONFeature {
+  type: 'Feature';
+  properties: Record<string, unknown>;
+  geometry: GeoJSONLineString;
+}
+
+/**
+ * GeoJSON feature collection
+ */
+export interface GeoJSONFeatureCollection {
+  type: 'FeatureCollection';
+  features: GeoJSONFeature[];
+}
+
+/**
+ * Geographic bounds (WGS84)
+ */
+export interface GeoBounds {
+  minLon: number;
+  maxLon: number;
+  minLat: number;
+  maxLat: number;
+}
+
+/**
+ * Track boundary data from GeoJSON
+ */
+export interface TrackBoundary {
+  name: string;
+  geojsonFile: string;
+  coordinates: [number, number][]; // [longitude, latitude][]
+  bounds: GeoBounds;
+}
+
+/**
+ * Complete track boundary data with all loaded boundaries
+ */
+export interface TrackBoundaryData {
+  trackName: string;
+  boundaries: TrackBoundary[];
+  combinedBounds: GeoBounds;
+}
+
+/**
+ * Coordinate transformation functions
+ */
+export interface CoordinateTransform {
+  geoToSvg: (lon: number, lat: number) => { x: number; y: number };
+  svgToGeo: (x: number, y: number) => { lon: number; lat: number };
+  scale: number;
+  offsetX: number;
+  offsetY: number;
+}
+
+/**
+ * SVG viewport configuration
+ */
+export interface SVGViewport {
+  width: number;
+  height: number;
+  padding: number;
+  viewBox: string;
+}
+
+/**
+ * Точка в мировых координатах (SVG/Canvas) с данными телеметрии
+ */
+export interface WorldPoint extends Point2D {
+  speed: number;
+  distance: number;
+  throttle: number | null;
+  brake: number | null;
+}
+
+/**
+ * Данные для отрисовки трека, подготовленные на бэкенде
+ */
+export interface TrackViewData {
+  worldPoints: WorldPoint[];
+  colors: string[];
+  bounds: GeoBounds;
+  scale: number;
+  offsetX: number;
+  offsetY: number;
+}
+
+/**
+ * Границы со смещением (left/right)
+ */
+export interface OffsetBoundaries {
+  left: Point2D[];
+  right: Point2D[];
+}
+
+/**
+ * Позиция курсора на треке
+ */
+export interface CursorPosition extends Point2D {
+  heading: number;
+}
+
+/**
+ * Точки envelope в мировых координатах
+ */
+export interface EnvelopeWorldPoints {
+  inner: Point2D[];
+  outer: Point2D[];
+  center: Point2D[];
+}
+
+// ============================================
+// Computed Boundary Types (Frenet-based)
+// ============================================
+
+/**
+ * Point in 2D space
+ */
+export interface Point2D {
+  x: number;
+  y: number;
+}
+
+/**
+ * Frenet coordinate point
+ * s = distance along track, d = lateral deviation
+ */
+export interface FrenetPoint {
+  s: number;
+  d: number;
+}
+
+/**
+ * A segment of track with boundary information
+ */
+export interface BoundarySegment {
+  s: number; // Position on track (meters from start)
+  dLeft: number; // Left boundary deviation (positive)
+  dRight: number; // Right boundary deviation (negative)
+  samples: number; // Number of data points in this segment
+}
+
+/**
+ * Reference line point with heading
+ */
+export interface ReferenceLinePoint extends Point2D {
+  s: number;
+  heading: number;
+}
+
+/**
+ * Reference line for Frenet transformations
+ */
+export interface ReferenceLine {
+  points: ReferenceLinePoint[];
+  totalLength: number;
+}
+
+/**
+ * Computed track boundary from telemetry data
+ */
+export interface ComputedTrackBoundary {
+  trackName: string;
+  trackLayout: string;
+  referenceLine: ReferenceLine;
+  segments: BoundarySegment[];
+  leftBoundary: Point2D[];
+  rightBoundary: Point2D[];
+  totalLaps: number;
+  updatedAt: string;
+}
+
+export interface BoundaryGeneratorOptions {
+  segmentSize: number;
+  fallbackWidth: number;
+  smoothWindow: number;
+  minSamplesPerSegment: number;
+  outlierThreshold: number;
+}
+
+/**
+ * Boundary generation mode
+ */
+export type BoundaryMode = 'auto' | 'manual' | 'geojson';
+
+/**
+ * Boundary display settings
+ */
+export interface BoundarySettings {
+  mode: BoundaryMode;
+  showBoundaries: boolean;
+  mergeWithManual: boolean;
+  fallbackWidth: number; // meters
+  segmentSize: number; // meters
+  boundaryOpacity: number;
+  boundaryColor: string;
+  boundaryStyle: 'solid' | 'dashed';
+}
+
+/**
+ * Default boundary settings
+ */
+export const DEFAULT_BOUNDARY_SETTINGS: BoundarySettings = {
+  mode: 'auto',
+  showBoundaries: true,
+  mergeWithManual: false,
+  fallbackWidth: 6,
+  segmentSize: 5,
+  boundaryOpacity: 0.7,
+  boundaryColor: '#666666',
+  boundaryStyle: 'dashed',
+};
+
+// ============================================
+// Track Boundary Envelope (from all telemetries)
+// ============================================
+
+/**
+ * Точка границы трека из всех телеметрий
+ */
+export interface TrackBoundaryPoint {
+  /** Дистанция вдоль трека */
+  distance: number;
+  /** Минимальные координаты (самая внутренняя точка) */
+  minX: number;
+  minY: number;
+  /** Максимальные координаты (самая внешняя точка) */
+  maxX: number;
+  maxY: number;
+  /** Центральная линия (среднее всех траекторий) */
+  centerX: number;
+  centerY: number;
+  /** Количество проходов через эту точку */
+  sampleCount: number;
+}
+
+/**
+ * Envelope границ трека на основе всех телеметрий из папки
+ */
+export interface TrackBoundaryEnvelope {
+  /** Имя трека */
+  trackName: string;
+  /** Общая длина трека */
+  trackLength: number;
+  /** Точки границ */
+  points: TrackBoundaryPoint[];
+  /** Количество проанализированных кругов */
+  totalLaps: number;
+  /** Количество проанализированных файлов */
+  totalFiles: number;
+}
+
+/**
+ * Результат анализа отклонения от оптимальной линии
+ */
+export interface TrackDeviationAnalysis {
+  /** Дистанция вдоль трека */
+  distance: number;
+  /** Фактические координаты */
+  actualX: number;
+  actualY: number;
+  /** Оптимальные координаты (центр envelope) */
+  optimalX: number;
+  optimalY: number;
+  /** Отклонение в метрах */
+  deviation: number;
+  /** Процент от ширины трека (0 = центр, 100 = на границе) */
+  deviationPercent: number;
+  /** Категория: 'safe' | 'warning' | 'danger' */
+  category: 'safe' | 'warning' | 'danger';
+}
+
+/**
+ * Анализ касания границ трека
+ */
+export interface BoundaryViolation {
+  /** Дистанция где произошло касание */
+  distance: number;
+  /** Координаты */
+  x: number;
+  y: number;
+  /** Тип касания: 'inner' | 'outer' */
+  side: 'inner' | 'outer';
+  /** Насколько вышли за границу (метры) */
+  overrun: number;
+}
+
+/**
+ * Corner detected from trajectory analysis
+ */
+export interface Corner {
+  id: number;
+  name: string;
+  startIndex: number;
+  endIndex: number;
+  apexIndex: number;
+  minSpeed: number;
+  entrySpeed: number;
+  exitSpeed: number;
+  turnDirection: 'left' | 'right';
+  maxCurvature: number;
+}

@@ -1,0 +1,83 @@
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+.lapList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: $spacing-xs;
+  height: 100%;
+  overflow-y: auto;
+  @include custom-scrollbar;
+}
+
+.lapItem {
+  @include flex-between;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-sm;
+  cursor: pointer;
+  transition: all $transition-fast;
+  background: $bg-tertiary;
+  border: 1px solid transparent;
+  user-select: none;
+
+  &:hover {
+    background: $bg-hover;
+    border-color: $border-color;
+  }
+
+  &.selected {
+    background: rgba($accent-primary, 0.15);
+    border-color: $accent-primary;
+  }
+
+  &.bestLap {
+    .lapTime {
+      color: $status-success;
+      font-weight: 600;
+    }
+  }
+}
+
+.lapMainInfo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.lapNumber {
+  @include mono-numbers;
+  font-size: $font-size-xs;
+  color: $text-muted;
+  min-width: 20px;
+}
+
+.lapTime {
+  @include mono-numbers;
+  font-size: $font-size-sm;
+  color: $text-primary;
+}
+
+.delta {
+  @include mono-numbers;
+  font-size: $font-size-xs;
+  font-weight: 600;
+
+  &.slower {
+    color: $status-error;
+  }
+
+  &.faster {
+    color: $status-success;
+  }
+}
+
+.bestLabel {
+  font-size: 10px;
+  font-weight: 800;
+  color: $status-success;
+  background: rgba($status-success, 0.1);
+  padding: 1px 4px;
+  border-radius: 2px;
+  letter-spacing: 0.5px;
+}

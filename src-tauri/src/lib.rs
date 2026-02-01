@@ -1,12 +1,42 @@
-#[tauri::command]
-fn get_lang_from_rust(lang: String) -> String {
-    lang
-}
+pub mod commands;
+pub mod db;
+pub mod models;
+pub mod parsers;
+
+use commands::*;
+use db::AppState;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![get_lang_from_rust])
+    let mut builder = tauri::Builder::default()
+        .plugin(tauri_plugin_devtools::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_store::Builder::default().build());
+
+    #[cfg(debug_assertions)]
+    {
+        builder = builder.plugin(tauri_plugin_mcp_bridge::init());
+    }
+
+    builder
+        .manage(AppState::new())
+        .invoke_handler(tauri::generate_handler![
+            open_telemetry_file,
+            get_session_info,
+            get_laps,
+            get_lap_telemetry,
+            get_trajectory,
+            scan_telemetry_folder,
+            analyze_track_boundaries,
+            commands::analysis::analyze_corners,
+            commands::track::generate_boundaries,
+            commands::visualization::prepare_track_view,
+            commands::visualization::find_nearest_point,
+            commands::visualization::interpolate_cursor_position,
+            commands::visualization::generate_offset_boundaries,
+            commands::visualization::transform_envelope_points
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

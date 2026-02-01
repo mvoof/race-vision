@@ -1,0 +1,42 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.chartContainer {
+  width: 100%;
+  background: $bg-card;
+  padding: $spacing-md;
+  border-radius: $border-radius-sm;
+}
+
+.customTooltip {
+  background: $bg-secondary;
+  border: 1px solid $border-color;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-sm;
+  box-shadow: $shadow-md;
+}
+
+.tooltipDistance {
+  font-family: $font-mono;
+  font-size: $font-size-xs;
+  color: $text-secondary;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: $spacing-xs;
+  padding-bottom: $spacing-xs;
+}
+
+.tooltipItem {
+  display: flex;
+  justify-content: space-between;
+  gap: $spacing-lg;
+  font-size: $font-size-sm;
+  font-family: $font-mono;
+}
+
+.label {
+  color: $text-secondary;
+}
+
+.value {
+  font-weight: $font-weight-bold;
+}

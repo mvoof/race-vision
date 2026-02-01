@@ -1,0 +1,239 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.analysisView {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: $bg-primary;
+  overflow: hidden;
+}
+
+.header {
+  @include flex-between;
+  padding: $spacing-sm $spacing-xl;
+  background: $bg-secondary;
+  border-bottom: 1px solid $border-color;
+  height: 60px;
+  flex-shrink: 0;
+}
+
+.headerLeft,
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.sessionInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.trackName {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $text-primary;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.sessionMeta {
+  font-size: $font-size-xs;
+  color: $text-secondary;
+}
+
+.presetSelector {
+  display: flex;
+  background: $bg-tertiary;
+  padding: 2px;
+  border-radius: $border-radius-sm;
+  gap: 2px;
+}
+
+.presetBtn {
+  min-width: 60px;
+}
+
+.controlsBar {
+  display: flex;
+  gap: $spacing-sm;
+  padding: $spacing-sm $spacing-xl;
+  background: $bg-secondary;
+  border-bottom: 1px solid $border-color;
+  overflow-x: auto;
+  @include hide-scrollbar;
+}
+
+.toggleBtn {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  white-space: nowrap;
+}
+
+// Main Content
+.content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  // No padding here, padding moved to inner containers if needed
+}
+
+.mainContainer {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.leftColumn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 400px;
+  @include custom-scrollbar;
+  padding: $panel-gap;
+  gap: $panel-gap;
+}
+
+.trackSection {
+  // Track maintains size via inline style; leftColumn scrolls when needed
+  flex: 0 0 auto;
+  min-height: 400px; 
+  display: flex;
+  flex-direction: column;
+  position: relative; // For absolute positioned resize handle
+}
+
+.trackPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.chartSection {
+  flex-shrink: 0;
+  background: #1a1a1a;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-md;
+  overflow: hidden;
+  position: relative; 
+  margin-bottom: 0; // No space needed below anymore
+}
+
+.widgetsSection {
+  // Width handled via inline style
+  flex-shrink: 0;
+  height: 100%;
+  overflow-y: auto;
+  @include custom-scrollbar;
+  min-width: 300px;
+  max-width: 800px;
+  padding: $panel-gap;
+  padding-left: 0; // Gap handled by resizer
+  background: $bg-primary;
+}
+
+.widgetContent {
+  background: #1a1a1a;
+  height: 100%; // Ensure it fills the widget body
+}
+
+.resizer {
+  width: 12px; // Visual gap + hit area
+  cursor: ew-resize; // col-resize not supported in WebView2 (Tauri on Windows/WSL)
+  z-index: 100;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: $bg-primary; // Default to background color (invisible gap)
+  transition: background 0.2s;
+
+  &:hover,
+  &.resizing,
+  &:focus-visible {
+    background: #000; // Darken on hover/action
+
+    &::after {
+      background: #444; // Dark grey line
+    }
+  }
+
+  &:focus-visible {
+    outline: 1px solid $accent-primary;
+    outline-offset: -1px;
+  }
+
+  &::after {
+    content: '';
+    width: 1px;
+    height: 100%;
+    background: $border-color; // Subtle divider
+    opacity: 0.5;
+    transition: background 0.2s;
+  }
+}
+
+.trackContainer {
+  height: 100%;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  border-radius: $border-radius-sm;
+}
+
+.modeSwitch {
+  display: flex;
+  gap: 2px;
+  background: $bg-tertiary;
+  padding: 2px;
+  border-radius: $border-radius-sm;
+}
+
+.timelineWrapper {
+  width: 100%;
+  padding: $spacing-xs 0;
+}
+
+.placeholder,
+.loadingPlaceholder {
+  @include flex-center;
+  height: 100%;
+  width: 100%;
+  color: $text-muted;
+  font-style: italic;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid $border-color;
+  border-top-color: $accent-primary;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.noData {
+  @include flex-center;
+  height: 100%;
+  color: $text-muted;
+  font-size: $font-size-sm;
+}
+
+.comingSoon {
+  @include flex-center;
+  height: 100%;
+  color: $text-muted;
+  font-size: $font-size-sm;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}

@@ -1,0 +1,160 @@
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+.layoutPresets {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.header {
+  @include flex-between;
+  gap: $spacing-md;
+}
+
+.title {
+  @include racing-header;
+  font-size: $font-size-lg;
+  color: $text-primary;
+  margin: 0;
+}
+
+.badge {
+  background: rgba(168, 85, 247, 0.2);
+  color: $racing-purple;
+  padding: 4px 12px;
+  border-radius: $border-radius-sm;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.presetGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: $spacing-md;
+}
+
+.presetCard {
+  @include card;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  cursor: pointer;
+  transition: all $transition-normal;
+  border: 2px solid transparent;
+  background: $bg-card;
+  text-align: left;
+
+  &:hover {
+    background: $bg-hover;
+    border-color: rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+  }
+
+  &.active {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: $accent-primary;
+    box-shadow: 0 0 30px $border-glow;
+
+    .presetIcon {
+      filter: drop-shadow(0 0 8px $accent-primary);
+    }
+  }
+}
+
+.presetIcon {
+  font-size: 32px;
+  flex-shrink: 0;
+  transition: filter $transition-normal;
+}
+
+.presetContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.presetName {
+  @include racing-header;
+  font-size: $font-size-md;
+  color: $text-primary;
+  margin: 0;
+}
+
+.presetDescription {
+  font-size: $font-size-sm;
+  color: $text-secondary;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.presetMeta {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-top: 4px;
+}
+
+.widgetCount {
+  font-size: $font-size-xs;
+  color: $text-muted;
+  background: rgba(59, 130, 246, 0.1);
+  padding: 2px 8px;
+  border-radius: $border-radius-sm;
+  @include mono-numbers;
+}
+
+.activeIndicator {
+  position: absolute;
+  top: $spacing-sm;
+  right: $spacing-sm;
+  color: $accent-primary;
+  animation: smoothAppear 0.3s ease-out;
+
+  svg {
+    display: block;
+  }
+}
+
+.resetButton {
+  @include button-secondary;
+  width: 100%;
+  justify-content: center;
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  &:hover:not(:disabled) {
+    color: $accent-primary;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .presetGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .presetCard {
+    flex-direction: column;
+    text-align: center;
+
+    .presetIcon {
+      font-size: 48px;
+    }
+  }
+
+  .activeIndicator {
+    top: auto;
+    bottom: $spacing-sm;
+    right: 50%;
+    transform: translateX(50%);
+  }
+}

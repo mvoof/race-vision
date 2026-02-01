@@ -1,0 +1,183 @@
+@use 'sass:color';
+@use 'variables' as *;
+
+// Flexbox utilities
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+// Card/Panel base
+@mixin card {
+  background: $bg-card;
+  border-radius: $border-radius-md;
+  border: 1px solid $border-color;
+}
+
+@mixin card-hover {
+  @include card;
+  transition:
+    background $transition-fast,
+    border-color $transition-fast;
+
+  &:hover {
+    background: $bg-tertiary;
+    border-color: $border-color-hover;
+  }
+}
+
+// Button base
+@mixin button-base {
+  @include flex-center;
+  gap: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-sm;
+  font-family: $font-family;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all $transition-fast;
+  border: none;
+  outline: none;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+@mixin button-primary {
+  @include button-base;
+  background: $accent-primary;
+  color: $text-inverse; // Contrast against Lime
+
+  &:hover:not(:disabled) {
+    background: color.adjust(
+      $accent-primary,
+      $lightness: -5%
+    ); // Darken slightly on hover
+  }
+
+  &:active:not(:disabled) {
+    background: color.adjust($accent-primary, $lightness: -10%);
+  }
+}
+
+@mixin button-secondary {
+  @include button-base;
+  background: transparent;
+  color: $text-primary;
+  border: 1px solid $border-color;
+
+  &:hover:not(:disabled) {
+    background: $bg-tertiary;
+    border-color: $text-secondary;
+  }
+}
+
+// Text truncation
+@mixin text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Scrollbar styling
+@mixin custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px; // Slimmer
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $border-color;
+    border-radius: 3px;
+
+    &:hover {
+      background: $text-secondary;
+    }
+  }
+}
+
+@mixin hide-scrollbar {
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+// Monospace numbers
+@mixin mono-numbers {
+  font-family: $font-mono;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+}
+
+@mixin racing-header {
+  font-family: $font-mono;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: $font-weight-bold;
+}
+
+@mixin widget-glow {
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  transition: box-shadow $transition-normal;
+
+  &:hover {
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+  }
+}
+
+// Animation
+@mixin fade-in($duration: $transition-normal) {
+  animation: fadeIn $duration ease forwards;
+}
+
+@keyframes widgetPop {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes smoothAppear {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

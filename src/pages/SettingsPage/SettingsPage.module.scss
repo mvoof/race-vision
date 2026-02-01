@@ -1,0 +1,197 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.settingsPage {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: $bg-primary;
+}
+
+.header {
+  @include flex-between;
+  padding: $spacing-md $spacing-xl;
+  border-bottom: 1px solid $border-color;
+  background: $bg-secondary;
+  flex-shrink: 0;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.title {
+  font-size: $font-size-xl;
+  font-weight: 600;
+  color: $text-primary;
+  margin: 0;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-xl;
+  @include custom-scrollbar;
+}
+
+.settingsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: $spacing-lg;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section {
+  height: auto;
+}
+
+.sectionBody {
+  padding: $spacing-md;
+}
+
+.sectionDescription {
+  font-size: $font-size-sm;
+  color: $text-secondary;
+  margin-bottom: $spacing-md;
+}
+
+.folderSelector {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.folderPath {
+  padding: $spacing-sm $spacing-md;
+  background: $bg-tertiary;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-sm;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.path {
+  font-family: $font-mono;
+  font-size: $font-size-xs;
+  color: $text-primary;
+  word-break: break-all;
+}
+
+.noFolder {
+  color: $text-muted;
+  font-size: $font-size-xs;
+}
+
+.folderActions {
+  display: flex;
+  gap: $spacing-sm;
+}
+
+.languageSelector {
+  display: flex;
+  gap: $spacing-sm;
+}
+
+.langButton {
+  flex: 1;
+}
+
+.dateFormatSelector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-sm;
+}
+
+.formatButton {
+  height: auto;
+  padding: $spacing-sm;
+}
+
+.formatButtonContent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.formatLabel {
+  font-weight: 500;
+  font-size: $font-size-sm;
+}
+
+.formatExample {
+  font-size: $font-size-xs;
+  opacity: 0.7;
+  font-family: $font-mono;
+  margin-top: 2px;
+}
+
+// Auto-scan settings
+.autoScanSettings {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.autoScanToggle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.toggleSwitch {
+  position: relative;
+  width: 40px;
+  height: 20px;
+  background: $bg-tertiary;
+  border: 1px solid $border-color;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    background: $text-muted;
+    border-radius: 50%;
+    transition: all $transition-fast;
+  }
+
+  &.active {
+    background: $accent-primary;
+    border-color: $accent-primary;
+
+    &::after {
+      transform: translateX(20px);
+      background: $text-inverse;
+    }
+  }
+}
+
+.toggleLabel {
+  font-size: $font-size-sm;
+  color: $text-primary;
+}
+
+.intervalSelector {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-sm;
+
+  &.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+.intervalButton {
+  width: 100%;
+}

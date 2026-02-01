@@ -1,0 +1,142 @@
+@use 'sass:color';
+@use 'variables' as *;
+@use 'mixins' as *;
+
+:root {
+  // Map SCSS variables to CSS variables for component modules
+  --surface-card: #{$bg-card};
+  --border-subtle: #{$border-color};
+  --border-focus: #{$border-active};
+  
+  --radius-md: #{$border-radius-md};
+  
+  --spacing-xs: #{$spacing-xs};
+  --spacing-sm: #{$spacing-sm};
+  --spacing-md: #{$spacing-md};
+  
+  --shadow-md: #{$shadow-md};
+  
+  --text-tertiary: #{$text-muted};
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: $font-family;
+  font-size: $font-size-md;
+  line-height: 1.4;
+  color: $text-primary;
+  background: $bg-primary;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+// Links
+a {
+  color: $accent-primary;
+  text-decoration: none;
+  transition: color $transition-fast;
+
+  &:hover {
+    color: color.adjust($accent-primary, $lightness: 10%);
+    text-decoration: none;
+  }
+}
+
+// Selection
+::selection {
+  background: rgba($accent-primary, 0.2);
+  color: $accent-primary;
+}
+
+// Focus visible
+:focus-visible {
+  outline: 1px solid $accent-primary;
+  outline-offset: 1px;
+}
+
+// Input base
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: $text-primary;
+  background: $bg-secondary;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-sm;
+  padding: $spacing-sm $spacing-md;
+  transition: border-color $transition-fast;
+
+  &:focus {
+    outline: none;
+    border-color: $accent-primary;
+  }
+
+  &::placeholder {
+    color: $text-muted;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// Buttons — global cursor & accessibility
+button {
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+// Utility classes
+.mono {
+  font-family: $font-mono;
+}
+
+.text-muted {
+  color: $text-muted;
+}
+
+.text-secondary {
+  color: $text-secondary;
+}
+
+.text-success {
+  color: $status-success;
+}
+
+.text-warning {
+  color: $status-warning;
+}
+
+.text-danger {
+  color: $status-error;
+}
+
+// Scrollable containers
+.scrollable {
+  @include custom-scrollbar;
+  overflow: auto;
+}

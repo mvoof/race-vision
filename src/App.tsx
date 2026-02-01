@@ -1,49 +1,88 @@
-import React from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { SettingsPage } from './pages/SettingsPage';
+import { SessionDashboard } from './components/session/SessionDashboard';
+import { AnalysisView } from './components/analysis/AnalysisView';
+import { AppLayout, Sidebar } from './components/layout';
+import type { PageId } from './components/layout';
+import { useSettingsStore } from './stores';
+import { useAutoScan } from './hooks';
+import './styles/global.scss';
 
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import i18n from './i18n';
-import { invoke } from '@tauri-apps/api/core';
+function App() {
+  const [currentPage, setCurrentPage] = useState<PageId>('sessions');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { initStore } = useSettingsStore();
 
-const languages = ['en', 'fr', 'es', 'ru'] as const;
-type AllLangType = (typeof languages)[number];
-
-const App = () => {
-  const { t } = useTranslation();
-
-  const [appLang, setAppLang] = useState<AllLangType>('en');
-
+  // Initialize settings store on app start
   useEffect(() => {
-    i18n.changeLanguage(appLang);
-  }, [appLang]);
+    initStore();
+  }, [initStore]);
 
-  const handleAppLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const lang = e.currentTarget.value as AllLangType;
+  // Auto-scan telemetry folder (initial + periodic)
+  useAutoScan();
 
-    invoke<AllLangType>('get_lang_from_rust', { lang }).then((langFromRust) =>
-      setAppLang(langFromRust)
-    );
-  };
+  const handleNavigate = useCallback((page: PageId) => {
+    setCurrentPage(page);
+  }, []);
+
+  const handleToggleSidebar = useCallback(() => {
+    setSidebarCollapsed((prev) => !prev);
+  }, []);
+
+  const handleOpenSettings = useCallback(() => {
+    setCurrentPage('settings');
+  }, []);
+
+  const handleCloseSettings = useCallback(() => {
+    setCurrentPage('sessions');
+  }, []);
+
+  const handleNavigateToAnalysis = useCallback(() => {
+    setCurrentPage('analysis');
+  }, []);
 
   return (
-    <div>
-      <h1>{t('welcome')}!</h1>
+    <AppLayout
+      sidebar={
+        <Sidebar
+          collapsed={sidebarCollapsed}
+          currentPage={currentPage}
+          onNavigate={handleNavigate}
+          onToggle={handleToggleSidebar}
+        />
+      }
+    >
+      {/* Page Content */}
+      {currentPage === 'sessions' && (
+        <SessionDashboard
+          onNavigateToAnalysis={handleNavigateToAnalysis}
+          onOpenSettings={handleOpenSettings}
+        />
+      )}
 
-      <label htmlFor="app-language-select">{t('changeLanguage')}:&nbsp;</label>
+      {currentPage === 'analysis' && (
+        <AnalysisView onBack={() => setCurrentPage('sessions')} />
+      )}
 
-      <select
-        id="app-language-select"
-        value={appLang}
-        onChange={handleAppLanguageChange}
-      >
-        {languages.map((lang) => (
-          <option key={lang} value={lang}>
-            {lang}
-          </option>
-        ))}
-      </select>
-    </div>
+      {currentPage === 'comparison' && (
+        <div style={{ padding: '24px', color: '#e0e0e0' }}>
+          <h2>Comparison Page</h2>
+          <p>Coming soon in Phase 4...</p>
+        </div>
+      )}
+
+      {currentPage === 'stint' && (
+        <div style={{ padding: '24px', color: '#e0e0e0' }}>
+          <h2>Stint Analysis Page</h2>
+          <p>Coming soon in Phase 4...</p>
+        </div>
+      )}
+
+      {currentPage === 'settings' && (
+        <SettingsPage onClose={handleCloseSettings} />
+      )}
+    </AppLayout>
   );
-};
+}
 
 export default App;
