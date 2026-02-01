@@ -36,7 +36,7 @@ import { TrackCanvas } from '../../components/track/TrackCanvas';
 import { TimelineSlider } from '../../components/track/TimelineSlider';
 import { WidgetGrid, WidgetContainer } from '../../components/layout';
 import { usePlayback } from '../../hooks/usePlayback';
-import { Button, Panel } from '../common';
+import { Button, Panel, ResizeHandle } from '../common';
 
 import {
   TireMonitor,
@@ -242,15 +242,14 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
     [handleMouseMove, stopResizing]
   );
 
-  // Corner Resizer (Chart Height + Panel Width)
+  // Chart Resizer (Height only - vertical resize with horizontal bar)
   const [isCornerResizing, setIsCornerResizing] = useState(false);
   const cornerResizingRef = useRef(false);
-  const cornerStartRef = useRef({ x: 0, y: 0, h: 0, w: 0 });
+  const cornerStartRef = useRef({ y: 0, h: 0 });
 
   const handleCornerMouseMove = useCallback(
     (e: MouseEvent) => {
       if (!cornerResizingRef.current) return;
-      const dx = e.clientX - cornerStartRef.current.x;
       const dy = e.clientY - cornerStartRef.current.y;
 
       // Height change (Chart)
@@ -260,17 +259,8 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
         Math.min(newHeight, window.innerHeight * 0.8)
       );
       setChartDrawerHeight(clampedHeight);
-
-      // Width change (Panel)
-      // Dragging Right (dx > 0) -> Left Col Grows -> Panel Width Shrinks
-      const newPanelWidth = cornerStartRef.current.w - dx;
-      const clampedWidth = Math.max(
-        300,
-        Math.min(newPanelWidth, window.innerWidth * 0.8)
-      );
-      setPanelWidth(clampedWidth);
     },
-    [setChartDrawerHeight, setPanelWidth]
+    [setChartDrawerHeight]
   );
 
   const stopCornerResizing = useCallback(() => {
@@ -289,17 +279,15 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
       setIsCornerResizing(true);
       cornerResizingRef.current = true;
       cornerStartRef.current = {
-        x: e.clientX,
         y: e.clientY,
         h: chartDrawerHeight,
-        w: panelWidth,
       };
       document.addEventListener('mousemove', handleCornerMouseMove);
       document.addEventListener('mouseup', stopCornerResizing);
-      document.body.style.cursor = 'nwse-resize';
+      document.body.style.cursor = 'ns-resize'; // Vertical resize cursor
       document.body.style.userSelect = 'none';
     },
-    [handleCornerMouseMove, stopCornerResizing, chartDrawerHeight, panelWidth]
+    [handleCornerMouseMove, stopCornerResizing, chartDrawerHeight]
   );
 
   // Track Section Resizer (Height only)
@@ -979,14 +967,11 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
                 </div>
               </Panel>
               {/* Track Resize Handle */}
-              <div
-                className={`${styles.resizeHandle} ${styles.trackResizeHandle} ${
-                  isTrackResizing ? styles.resizing : ''
-                }`}
+              <ResizeHandle
+                variant="bar"
+                isResizing={isTrackResizing}
                 onMouseDown={startTrackResizing}
-                role="separator"
-                aria-label="Resize track"
-                tabIndex={0}
+                ariaLabel="Resize track height"
               />
             </div>
 
@@ -1006,15 +991,12 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
               ) : (
                 <div className={styles.noData}>{t('hoverOverTrack')}</div>
               )}
-              {/* Corner Resize Handle */}
-              <div
-                className={`${styles.resizeHandle} ${
-                  isCornerResizing ? styles.resizing : ''
-                }`}
+              {/* Chart Resize Handle */}
+              <ResizeHandle
+                variant="bar"
+                isResizing={isCornerResizing}
                 onMouseDown={startCornerResizing}
-                role="separator"
-                aria-label="Resize chart"
-                tabIndex={0}
+                ariaLabel="Resize chart height"
               />
             </div>
           </div>
