@@ -23,6 +23,7 @@ import {
 import { formatDate } from '../../utils/dateFormat';
 import type { TelemetryFileInfo } from '../../types';
 import { Button } from '../common';
+import { SessionCard } from './SessionCard';
 import styles from './SessionDashboard.module.scss';
 
 interface SessionDashboardProps {
@@ -292,38 +293,13 @@ export function SessionDashboard({
                 <h3 className={styles.groupHeader}>{group.label}</h3>
                 <div className={styles.cardsGrid}>
                   {group.files.map((file) => (
-                    <div
+                    <SessionCard
                       key={file.path}
-                      className={`${styles.sessionCard} ${isLoading ? styles.disabled : ''}`}
-                      onClick={() => !isLoading && handleFileSelect(file)}
-                      role="button"
-                      tabIndex={0}
-                    >
-                      <div className={styles.cardHeader}>
-                        <span className={styles.trackName}>
-                          {file.trackName || t('unknownTrack')}
-                        </span>
-                      </div>
-
-                      <div className={styles.cardBody}>
-                        <div className={styles.infoRow}>
-                          <Database size={14} />
-                          <span>{file.carName || t('unknownCar')}</span>
-                        </div>
-                        <div className={styles.infoRow}>
-                          <Clock size={14} />
-                          <span>{file.sessionType || 'Session'}</span>
-                        </div>
-                      </div>
-
-                      <div className={styles.cardFooter}>
-                        <div className={styles.date}>
-                          <Calendar size={12} />
-                          {formatDate(file.modifiedTime, dateFormat)}
-                        </div>
-                        <div className={styles.arrow}>→</div>
-                      </div>
-                    </div>
+                      file={file}
+                      onClick={handleFileSelect}
+                      isLoading={isLoading}
+                      dateFormat={dateFormat}
+                    />
                   ))}
                 </div>
               </div>
