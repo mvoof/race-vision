@@ -196,6 +196,8 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
   // Local telemetry data (loaded per-lap, used for chart + cursor interpolation)
   const [lapTelemetry, setLapTelemetry] = useState<LapTelemetry | null>(null);
 
+  const contentRef = useRef<HTMLDivElement>(null);
+
   // Resizing Logic
   const [isResizing, setIsResizing] = useState(false);
   const resizingRef = React.useRef(false);
@@ -236,45 +238,64 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
     [handleMouseMove, stopResizing]
   );
 
-  // Vertical Resizer (chart drawer)
-  const [isVResizing, setIsVResizing] = useState(false);
-  const vResizingRef = useRef(false);
-  const contentRef = useRef<HTMLDivElement>(null);
+  // Corner Resizer (Chart Height + Panel Width)
+  const [isCornerResizing, setIsCornerResizing] = useState(false);
+  const cornerResizingRef = useRef(false);
+  const cornerStartRef = useRef({ x: 0, y: 0, h: 0, w: 0 });
 
-  const handleVMouseMove = useCallback(
+  const handleCornerMouseMove = useCallback(
     (e: MouseEvent) => {
-      if (!vResizingRef.current || !contentRef.current) return;
-      const contentRect = contentRef.current.getBoundingClientRect();
-      const newHeight = contentRect.bottom - e.clientY;
+      if (!cornerResizingRef.current) return;
+      const dx = e.clientX - cornerStartRef.current.x;
+      const dy = e.clientY - cornerStartRef.current.y;
+
+      // Height change (Chart)
+      const newHeight = cornerStartRef.current.h + dy;
       const clampedHeight = Math.max(
         100,
-        Math.min(newHeight, contentRect.height * 0.6)
+        Math.min(newHeight, window.innerHeight * 0.8)
       );
       setChartDrawerHeight(clampedHeight);
+
+      // Width change (Panel)
+      // Dragging Right (dx > 0) -> Left Col Grows -> Panel Width Shrinks
+      const newPanelWidth = cornerStartRef.current.w - dx;
+      const clampedWidth = Math.max(
+        300,
+        Math.min(newPanelWidth, window.innerWidth * 0.8)
+      );
+      setPanelWidth(clampedWidth);
     },
-    [setChartDrawerHeight]
+    [setChartDrawerHeight, setPanelWidth]
   );
 
-  const stopVResizing = useCallback(() => {
-    setIsVResizing(false);
-    vResizingRef.current = false;
-    document.removeEventListener('mousemove', handleVMouseMove);
-    document.removeEventListener('mouseup', stopVResizing);
+  const stopCornerResizing = useCallback(() => {
+    setIsCornerResizing(false);
+    cornerResizingRef.current = false;
+    document.removeEventListener('mousemove', handleCornerMouseMove);
+    document.removeEventListener('mouseup', stopCornerResizing);
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
-  }, [handleVMouseMove]);
+  }, [handleCornerMouseMove]);
 
-  const startVResizing = useCallback(
+  const startCornerResizing = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
-      setIsVResizing(true);
-      vResizingRef.current = true;
-      document.addEventListener('mousemove', handleVMouseMove);
-      document.addEventListener('mouseup', stopVResizing);
-      document.body.style.cursor = 'ns-resize';
+      e.stopPropagation(); // Prevent interfering with other interactions
+      setIsCornerResizing(true);
+      cornerResizingRef.current = true;
+      cornerStartRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+        h: chartDrawerHeight,
+        w: panelWidth,
+      };
+      document.addEventListener('mousemove', handleCornerMouseMove);
+      document.addEventListener('mouseup', stopCornerResizing);
+      document.body.style.cursor = 'nwse-resize';
       document.body.style.userSelect = 'none';
     },
-    [handleVMouseMove, stopVResizing]
+    [handleCornerMouseMove, stopCornerResizing, chartDrawerHeight, panelWidth]
   );
 
   // Playback Logic
@@ -822,82 +843,110 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
         </div>
       )}
 
-      {/* Main Content */}
+      {/* Main Content (Split Layout) */}
       <div className={styles.content} ref={contentRef}>
-        {/* Top Row: Track Map + Widgets */}
-        <div className={styles.gridContainer}>
-          {/* Left Panel: Track Map */}
-          <div className={styles.trackSection}>
-            <Panel
-              title="Track Map"
-              icon={<MapIcon size={16} />}
-              className={styles.trackPanel}
-              actions={
-                selectedLapNumber !== null && (
-                  <div className={styles.modeSwitch}>
-                    <Button
-                      variant={colorMode === 'speed' ? 'primary' : 'ghost'}
-                      size="small"
-                      onClick={() => setColorMode('speed')}
-                    >
-                      Speed
-                    </Button>
-                    <Button
-                      variant={colorMode === 'throttle' ? 'primary' : 'ghost'}
-                      size="small"
-                      onClick={() => setColorMode('throttle')}
-                    >
-                      Inputs
-                    </Button>
+        <div className={styles.mainContainer}>
+          {/* Left Column: Track Map + Telemetry Chart */}
+          <div className={styles.leftColumn}>
+            {/* Track Map Section */}
+            <div className={styles.trackSection}>
+              <Panel
+                title="Track Map"
+                icon={<MapIcon size={16} />}
+                className={styles.trackPanel}
+                actions={
+                  selectedLapNumber !== null && (
+                    <div className={styles.modeSwitch}>
+                      <Button
+                        variant={colorMode === 'speed' ? 'primary' : 'ghost'}
+                        size="small"
+                        onClick={() => setColorMode('speed')}
+                      >
+                        Speed
+                      </Button>
+                      <Button
+                        variant={colorMode === 'throttle' ? 'primary' : 'ghost'}
+                        size="small"
+                        onClick={() => setColorMode('throttle')}
+                      >
+                        Inputs
+                      </Button>
+                    </div>
+                  )
+                }
+                footer={
+                  <div className={styles.timelineWrapper}>
+                    <TimelineSlider
+                      duration={totalDuration}
+                      currentTime={currentTime}
+                      currentTimeRef={currentTimeRef}
+                      laps={laps}
+                      isPlaying={isPlaying}
+                      playbackSpeed={playbackSpeed}
+                      onSeek={seek}
+                      onPlayPause={isPlaying ? pause : play}
+                      onSpeedChange={setPlaybackSpeed}
+                    />
                   </div>
-                )
-              }
-              footer={
-                <div className={styles.timelineWrapper}>
-                  <TimelineSlider
-                    duration={totalDuration}
-                    currentTime={currentTime}
-                    currentTimeRef={currentTimeRef}
-                    laps={laps}
-                    isPlaying={isPlaying}
-                    playbackSpeed={playbackSpeed}
-                    onSeek={seek}
-                    onPlayPause={isPlaying ? pause : play}
-                    onSpeedChange={setPlaybackSpeed}
-                  />
-                </div>
-              }
-            >
-              <div
-                className={styles.trackContainer}
-                style={{ background: '#1a1a1a' }}
+                }
               >
-                {isLoadingTrajectory ? (
-                  <div className={styles.loadingPlaceholder}>
-                    <span className={styles.spinner} />
-                  </div>
-                ) : trajectory.length > 0 ? (
-                  <TrackCanvas
-                    trajectory={trajectory}
-                    envelope={envelope}
-                    showBoundaries={true}
-                    showEnvelope={true}
-                    cursorDistanceRef={cursorDistanceRef}
-                    currentLapTime={currentLapTimeDisplay}
-                    currentLapNumber={selectedLapNumber}
-                    deltaTime={deltaValue}
-                    onDistanceHover={handleDistanceChange}
-                  />
-                ) : (
-                  <div className={styles.placeholder}>
-                    {t('selectLapToViewTrack')}
-                  </div>
-                )}
-              </div>
-            </Panel>
+                <div
+                  className={styles.trackContainer}
+                  style={{ background: '#1a1a1a' }}
+                >
+                  {isLoadingTrajectory ? (
+                    <div className={styles.loadingPlaceholder}>
+                      <span className={styles.spinner} />
+                    </div>
+                  ) : trajectory.length > 0 ? (
+                    <TrackCanvas
+                      trajectory={trajectory}
+                      envelope={envelope}
+                      showBoundaries={true}
+                      showEnvelope={true}
+                      cursorDistanceRef={cursorDistanceRef}
+                      currentLapTime={currentLapTimeDisplay}
+                      currentLapNumber={selectedLapNumber}
+                      deltaTime={deltaValue}
+                      onDistanceHover={handleDistanceChange}
+                    />
+                  ) : (
+                    <div className={styles.placeholder}>
+                      {t('selectLapToViewTrack')}
+                    </div>
+                  )}
+                </div>
+              </Panel>
+            </div>
+
+            {/* Telemetry Chart Section (Resizable) */}
+            <div
+              className={styles.chartSection}
+              style={{ height: chartDrawerHeight }}
+            >
+              {lapTelemetry ? (
+                <TelemetryChart
+                  data={lapTelemetry.samples}
+                  height="100%"
+                  onCursorChange={handleDistanceChange}
+                />
+              ) : (
+                <div className={styles.noData}>{t('hoverOverTrack')}</div>
+              )}
+              {/* Corner Resize Handle */}
+              <div
+                className={`${styles.resizeHandle} ${
+                  isCornerResizing ? styles.resizing : ''
+                }`}
+                onMouseDown={startCornerResizing}
+                role="separator"
+                aria-label="Resize chart"
+                tabIndex={0}
+              />
+            </div>
           </div>
 
-          {/* Resizer Handle */}
+          {/* Horizontal Resizer (Left vs Right) */}
           <div
             className={`${styles.resizer} ${isResizing ? styles.resizing : ''}`}
             onMouseDown={startResizing}
@@ -907,7 +956,7 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
             tabIndex={0}
           />
 
-          {/* Right Panel: Widgets Grid */}
+          {/* Right Column: Widgets */}
           <div className={styles.widgetsSection} style={{ width: panelWidth }}>
             <WidgetGrid
               layout={telemetryWidgets}
@@ -934,31 +983,6 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
               })}
             </WidgetGrid>
           </div>
-        </div>
-
-        {/* Chart Drawer Resizer (full width) */}
-        <div
-          className={`${styles.chartResizer} ${isVResizing ? styles.resizing : ''}`}
-          onMouseDown={startVResizing}
-          role="separator"
-          aria-orientation="horizontal"
-          aria-label="Resize chart drawer"
-          tabIndex={0}
-        />
-
-        {/* Chart Drawer (full width) */}
-        <div
-          className={styles.chartDrawer}
-          style={{ height: chartDrawerHeight }}
-        >
-          {lapTelemetry ? (
-            <TelemetryChart
-              data={lapTelemetry.samples}
-              height="100%"
-            />
-          ) : (
-            <div className={styles.noData}>{t('hoverOverTrack')}</div>
-          )}
         </div>
       </div>
     </div>

@@ -6,7 +6,7 @@ import {
   useState,
   type RefObject,
 } from 'react';
-import { Crosshair } from 'lucide-react';
+import { Crosshair, Plus, Minus, RotateCcw } from 'lucide-react';
 import type {
   TrajectoryPoint,
   ComputedTrackBoundary,
@@ -27,6 +27,7 @@ import { useBoundaryStore } from '../../../stores/boundaryStore';
 import { screenToWorld } from './utils/canvasTransform';
 import type { Camera } from './utils/canvasTransform';
 import { useCanvasRenderer } from './useCanvasRenderer';
+import { Button } from '../../common/Button';
 import styles from './TrackCanvas.module.scss';
 
 interface TrackCanvasProps {
@@ -529,30 +530,34 @@ export function TrackCanvas({
       )}
 
       <div className={styles.controls}>
-        <button className={styles.zoomButton} onClick={zoomIn} title="Zoom in">
-          +
-        </button>
-        <button
+        <Button
+          variant="secondary"
+          icon={<Plus size={16} />}
+          onClick={zoomIn}
+          title="Zoom in"
           className={styles.zoomButton}
+        />
+        <Button
+          variant="secondary"
+          icon={<Minus size={16} />}
           onClick={zoomOut}
           title="Zoom out"
-        >
-          -
-        </button>
-        <button
           className={styles.zoomButton}
+        />
+        <Button
+          variant="secondary"
+          icon={<RotateCcw size={16} />}
           onClick={resetZoom}
           title="Reset view"
-        >
-          R
-        </button>
-        <button
-          className={`${styles.zoomButton} ${isFollowing ? styles.followActive : ''}`}
+          className={styles.zoomButton}
+        />
+        <Button
+          variant="secondary"
+          icon={<Crosshair size={16} />}
           onClick={toggleFollowing}
           title={isFollowing ? 'Stop following car' : 'Follow car'}
-        >
-          <Crosshair size={16} />
-        </button>
+          className={`${styles.zoomButton} ${isFollowing ? styles.followActive : ''}`}
+        />
       </div>
     </div>
   );

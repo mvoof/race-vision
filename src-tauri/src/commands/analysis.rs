@@ -12,7 +12,7 @@ pub async fn analyze_corners(trajectory: Vec<TrajectoryPoint>) -> Result<Vec<Cor
     let mut corners = Vec::new();
     
     // Threshold for detecting a corner (tunable)
-    let curvature_threshold = 0.005; 
+    let curvature_threshold = 0.002;
     let mut in_corner = false;
     let mut start_index = 0;
 
@@ -28,7 +28,7 @@ pub async fn analyze_corners(trajectory: Vec<TrajectoryPoint>) -> Result<Vec<Cor
             let end_index = i;
 
             // Filter out noise (very short corners)
-            if end_index - start_index > 5 {
+            if end_index - start_index > 10 {
                  let corner = process_corner(&trajectory, start_index, end_index, (corners.len() + 1) as u32);
                  corners.push(corner);
             }

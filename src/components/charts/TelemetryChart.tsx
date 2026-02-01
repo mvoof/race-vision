@@ -19,12 +19,14 @@ export interface TelemetryChartProps {
   data: TelemetrySample[];
   height?: number | string;
   syncId?: string;
+  onCursorChange?: (distance: number | null) => void;
 }
 
 export function TelemetryChart({
   data,
   height = 300,
   syncId = 'telemetry',
+  onCursorChange,
 }: TelemetryChartProps) {
   const cursorDistance = useTrackViewStore((s) => s.cursorDistance);
   const setCursorDistance = useTrackViewStore((s) => s.setCursorDistance);
@@ -36,15 +38,26 @@ export function TelemetryChart({
     (state: any) => {
       if (state && state.activePayload && state.activePayload.length > 0) {
         const distance = state.activePayload[0].payload.lapDistance;
-        setCursorDistance(distance);
+        
+        // If parent handler provided, let it drive the state (including sync with timeline)
+        if (onCursorChange) {
+          onCursorChange(distance);
+        } else {
+          // Otherwise just update the visual cursor store
+          setCursorDistance(distance);
+        }
       }
     },
-    [setCursorDistance]
+    [setCursorDistance, onCursorChange]
   );
 
   const handleMouseLeave = useCallback(() => {
-    // onCursorChange(null);
-  }, []);
+    if (onCursorChange) {
+      onCursorChange(null);
+    }
+    // We don't necessarily clear store cursor on leave to keep the last position visible, 
+    // but if the parent wants to clear it, it can.
+  }, [onCursorChange]);
 
   return (
     <div className={styles.chartContainer} style={{ height }}>

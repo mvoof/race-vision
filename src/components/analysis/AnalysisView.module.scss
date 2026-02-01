@@ -76,80 +76,93 @@
 .content {
   flex: 1;
   overflow: hidden;
-  padding: $panel-gap;
   display: flex;
-  flex-direction: column;
+  // No padding here, padding moved to inner containers if needed
 }
 
-.gridContainer {
+.mainContainer {
   display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.leftColumn {
   flex: 1;
-  min-height: 0; // Allow shrinking for chart drawer
-  // Gap handled by resizer
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 400px;
+  @include custom-scrollbar;
+  padding: $panel-gap;
+  gap: $panel-gap;
 }
 
 .trackSection {
+  // Map takes available space but has a healthy minimum to ensure visibility
   flex: 1;
-  min-width: 0;
+  min-height: 400px; 
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
 }
 
 .trackPanel {
   flex: 1;
-  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.chartResizer {
-  height: 6px;
-  cursor: ns-resize;
+.chartSection {
   flex-shrink: 0;
+  background: #1a1a1a;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-md;
+  overflow: hidden;
+  position: relative; 
+  margin-bottom: 0; // No space needed below anymore
+}
+
+.resizeHandle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  cursor: nwse-resize;
+  z-index: 20;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  background: $bg-primary;
-  transition: background 0.2s;
-
-  &:hover,
-  &.resizing,
-  &:focus-visible {
-    background: #000;
-
-    &::after {
-      background: #444;
-    }
-  }
-
-  &:focus-visible {
-    outline: 1px solid $accent-primary;
-    outline-offset: -1px;
-  }
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 2px;
 
   &::after {
     content: '';
-    width: 40px;
-    height: 2px;
-    border-radius: 1px;
-    background: $border-color;
-    opacity: 0.5;
-    transition: background 0.2s;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 0 10px 10px;
+    border-color: transparent transparent rgba($text-muted, 0.3) transparent;
+    transition: border-color 0.2s;
   }
-}
 
-.chartDrawer {
-  flex-shrink: 0;
-  background: #1a1a1a;
-  border-top: 1px solid $border-color;
-  overflow: hidden;
+  &:hover::after,
+  &.resizing::after {
+    border-color: transparent transparent $accent-primary transparent;
+  }
 }
 
 .widgetsSection {
   // Width handled via inline style
   flex-shrink: 0;
+  height: 100%;
   overflow-y: auto;
   @include custom-scrollbar;
   min-width: 300px;
   max-width: 800px;
+  padding: $panel-gap;
+  padding-left: 0; // Gap handled by resizer
+  background: $bg-primary;
 }
 
 .widgetContent {
@@ -198,6 +211,7 @@
   width: 100%;
   position: relative;
   overflow: hidden;
+  border-radius: $border-radius-sm;
 }
 
 .modeSwitch {

@@ -21,14 +21,10 @@ export function applyCamera(
 ): void {
   const scaleX = canvasW / camera.width;
   const scaleY = canvasH / camera.height;
-  ctx.setTransform(
-    scaleX,
-    0,
-    0,
-    scaleY,
-    -camera.x * scaleX,
-    -camera.y * scaleY
-  );
+  
+  // Use scale and translate to compose with existing transforms (like DPR scaling)
+  ctx.scale(scaleX, scaleY);
+  ctx.translate(-camera.x, -camera.y);
 }
 
 /**

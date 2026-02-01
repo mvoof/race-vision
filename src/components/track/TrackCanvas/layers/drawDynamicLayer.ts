@@ -74,11 +74,35 @@ export function drawDynamicLayer(
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
-    for (let i = 0; i < colors.length; i++) {
+    let startIndex = 0;
+    let currentColor = colors[0];
+
+    // Batch draw calls by color
+    for (let i = 1; i < colors.length; i++) {
+      if (colors[i] !== currentColor) {
+        // Draw batch
+        ctx.beginPath();
+        ctx.moveTo(worldPoints[startIndex].x, worldPoints[startIndex].y);
+        for (let j = startIndex + 1; j <= i; j++) {
+          ctx.lineTo(worldPoints[j].x, worldPoints[j].y);
+        }
+        ctx.strokeStyle = currentColor;
+        ctx.stroke();
+
+        // Start new batch
+        startIndex = i;
+        currentColor = colors[i];
+      }
+    }
+
+    // Draw final batch
+    if (startIndex < colors.length) {
       ctx.beginPath();
-      ctx.moveTo(worldPoints[i].x, worldPoints[i].y);
-      ctx.lineTo(worldPoints[i + 1].x, worldPoints[i + 1].y);
-      ctx.strokeStyle = colors[i];
+      ctx.moveTo(worldPoints[startIndex].x, worldPoints[startIndex].y);
+      for (let j = startIndex + 1; j <= colors.length; j++) {
+        ctx.lineTo(worldPoints[j].x, worldPoints[j].y);
+      }
+      ctx.strokeStyle = currentColor;
       ctx.stroke();
     }
   }
