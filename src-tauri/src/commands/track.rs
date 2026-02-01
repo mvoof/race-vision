@@ -149,9 +149,9 @@ fn create_reference_line(
             
             let mut sum_x = 0.0;
             let mut sum_y = 0.0;
-            for j in start..=end {
-                sum_x += points[j].x;
-                sum_y += points[j].y;
+            for p in &points[start..=end] {
+                sum_x += p.x;
+                sum_y += p.y;
             }
             res.push(Point2D { x: sum_x / count, y: sum_y / count });
         }
@@ -332,9 +332,9 @@ fn smooth_boundary_segments(segments: &[BoundarySegment], window_size: usize) ->
         let mut sum_left = 0.0;
         let mut sum_right = 0.0;
         
-        for j in start..=end {
-            sum_left += segments[j].d_left;
-            sum_right += segments[j].d_right;
+        for seg in &segments[start..=end] {
+            sum_left += seg.d_left;
+            sum_right += seg.d_right;
         }
 
         smoothed.push(BoundarySegment {

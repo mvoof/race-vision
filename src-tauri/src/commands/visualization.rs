@@ -188,8 +188,7 @@ fn compute_colors(points: &[WorldPoint], color_mode: &str, track_color: &str) ->
     }
 
     let mut colors = Vec::with_capacity(n);
-    for i in 0..n {
-        let p = &points[i];
+    for p in points.iter().take(n) {
         let color = match color_mode {
             "speed" => speed_to_color(p.speed, min_speed, max_speed),
             "throttle" | "brake" => throttle_brake_to_color(
@@ -412,6 +411,7 @@ pub async fn generate_offset_boundaries(
 // Transforms envelope boundary points from geo coords to SVG world coords.
 
 #[command]
+#[allow(clippy::too_many_arguments)]
 pub async fn transform_envelope_points(
     points: Vec<crate::models::TrackBoundaryPoint>,
     min_lon: f64,

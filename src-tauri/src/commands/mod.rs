@@ -279,7 +279,7 @@ pub async fn analyze_track_boundaries(
             let distance_key = point.distance.round() as i32;
             distance_buckets
                 .entry(distance_key)
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push((point.x, point.y));
 
             if point.distance > max_distance {

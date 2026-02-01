@@ -17,8 +17,8 @@ pub async fn analyze_corners(trajectory: Vec<TrajectoryPoint>) -> Result<Vec<Cor
     let mut start_index = 0;
 
     // Iterate through points to find segments with high curvature
-    for i in 2..curvatures.len() - 2 {
-        let is_above = curvatures[i] > curvature_threshold;
+    for (i, &curvature) in curvatures.iter().enumerate().take(curvatures.len() - 2).skip(2) {
+        let is_above = curvature > curvature_threshold;
 
         if is_above && !in_corner {
             in_corner = true;
@@ -67,9 +67,9 @@ fn process_corner(trajectory: &[TrajectoryPoint], start_index: usize, end_index:
     let mut min_speed = trajectory[start_index].speed;
     
     // Find point of minimum speed (Apex)
-    for i in start_index..=end_index {
-        if trajectory[i].speed < min_speed {
-            min_speed = trajectory[i].speed;
+    for (i, p) in trajectory.iter().enumerate().take(end_index + 1).skip(start_index) {
+        if p.speed < min_speed {
+            min_speed = p.speed;
             apex_index = i;
         }
     }

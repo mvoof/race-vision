@@ -233,12 +233,12 @@ impl TelemetryParser for LmuParser {
             // Находим секторы для этого круга
             let s1 = sector1_events
                 .iter()
-                .find(|(ts, _)| *ts >= start_ts && end_ts.map_or(true, |end| *ts < end))
+                .find(|(ts, _)| *ts >= start_ts && end_ts.is_none_or(|end| *ts < end))
                 .map(|(_, t)| *t as f64);
 
             let s2 = sector2_events
                 .iter()
-                .find(|(ts, _)| *ts >= start_ts && end_ts.map_or(true, |end| *ts < end))
+                .find(|(ts, _)| *ts >= start_ts && end_ts.is_none_or(|end| *ts < end))
                 .map(|(_, t)| *t as f64);
 
             // S3 = lap_time - S1 - S2
@@ -392,7 +392,7 @@ impl TelemetryParser for LmuParser {
             let gear = gear_events
                 .iter()
                 .filter(|(ts, _)| *ts <= current_ts)
-                .last()
+                .next_back()
                 .map(|(_, g)| *g)
                 .unwrap_or(0);
 
