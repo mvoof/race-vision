@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   RotateCcw,
@@ -18,16 +24,15 @@ import {
 
 import { useSessionStore, useSettingsStore } from '../../stores';
 import { useLayoutStore } from '../../stores/layoutStore';
+import { useTrackViewStore } from '../../stores/trackViewStore';
+import { useBoundaryStore } from '../../stores/boundaryStore';
 import {
   getTrajectory,
   getLapTelemetry,
   openAndLoadTelemetryFile,
   analyzeTrackBoundaries,
 } from '../../services/tauri';
-import {
-  TrackCanvas,
-  type ColorMode,
-} from '../../components/track/TrackCanvas';
+import { TrackCanvas } from '../../components/track/TrackCanvas';
 import { TimelineSlider } from '../../components/track/TimelineSlider';
 import { WidgetGrid, WidgetContainer } from '../../components/layout';
 import { usePlayback } from '../../hooks/usePlayback';
@@ -40,12 +45,12 @@ import {
   SteeringWheel,
   PedalInputs,
 } from '../../components/widgets';
+import { LapList } from '../../components/session/LapList';
 import { TelemetryChart } from '../../components/charts';
 
 import type {
   TelemetrySample,
   LapTelemetry,
-  TrackBoundaryEnvelope,
 } from '../../types';
 import styles from './AnalysisView.module.scss';
 
@@ -174,14 +179,22 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
 
   const currentLayout = layouts[currentPreset];
 
-  // Local State
-  const [colorMode, setColorMode] = useState<ColorMode>('speed');
-  const [cursorDistance, setCursorDistance] = useState<number | null>(null);
-  const [telemetrySample, setTelemetrySample] =
-    useState<TelemetrySample | null>(null);
+  // ── Track View Store ──
+  const colorMode = useTrackViewStore((s) => s.colorMode);
+  const setColorMode = useTrackViewStore((s) => s.setColorMode);
+  const cursorDistance = useTrackViewStore((s) => s.cursorDistance);
+  const setCursorDistance = useTrackViewStore((s) => s.setCursorDistance);
+  const telemetrySample = useTrackViewStore((s) => s.telemetrySample);
+  const setTelemetrySample = useTrackViewStore((s) => s.setTelemetrySample);
+  const showLayoutControls = useTrackViewStore((s) => s.showLayoutControls);
+  const setShowLayoutControls = useTrackViewStore((s) => s.setShowLayoutControls);
+
+  // ── Boundary Store ──
+  const envelope = useBoundaryStore((s) => s.envelope);
+  const setEnvelope = useBoundaryStore((s) => s.setEnvelope);
+
+  // Local telemetry data (loaded per-lap, used for chart + cursor interpolation)
   const [lapTelemetry, setLapTelemetry] = useState<LapTelemetry | null>(null);
-  const [envelope, setEnvelope] = useState<TrackBoundaryEnvelope | null>(null);
-  const [showLayoutControls, setShowLayoutControls] = useState(false);
 
   // Resizing Logic
   const [isResizing, setIsResizing] = useState(false);
@@ -233,7 +246,10 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
       if (!vResizingRef.current || !contentRef.current) return;
       const contentRect = contentRef.current.getBoundingClientRect();
       const newHeight = contentRect.bottom - e.clientY;
-      const clampedHeight = Math.max(100, Math.min(newHeight, contentRect.height * 0.6));
+      const clampedHeight = Math.max(
+        100,
+        Math.min(newHeight, contentRect.height * 0.6)
+      );
       setChartDrawerHeight(clampedHeight);
     },
     [setChartDrawerHeight]
@@ -270,7 +286,16 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
     );
   }, [laps]);
 
-  const { isPlaying, currentTime, currentTimeRef, playbackSpeed, setPlaybackSpeed, play, pause, seek } = usePlayback({
+  const {
+    isPlaying,
+    currentTime,
+    currentTimeRef,
+    playbackSpeed,
+    setPlaybackSpeed,
+    play,
+    pause,
+    seek,
+  } = usePlayback({
     duration: totalDuration,
   });
 
@@ -385,17 +410,75 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
       setSelectedLap(activeLap.lapNumber);
     }
 
-    // Prefetch next lap's trajectory during playback for smooth transitions
+    // Prefetch next lap's trajectory + telemetry during playback for smooth transitions
     if (isPlaying) {
       const activeLapIdx = laps.indexOf(activeLap);
       const nextLap = laps[activeLapIdx + 1];
-      if (nextLap && !lapCache[nextLap.lapNumber]?.trajectory) {
-        getTrajectory(nextLap.lapNumber)
-          .then((traj) => cacheLapData(nextLap.lapNumber, { trajectory: traj }))
-          .catch(() => {});
+      if (nextLap) {
+        if (!lapCache[nextLap.lapNumber]?.trajectory) {
+          getTrajectory(nextLap.lapNumber)
+            .then((traj) => cacheLapData(nextLap.lapNumber, { trajectory: traj }))
+            .catch(() => {});
+        }
+        if (!lapCache[nextLap.lapNumber]?.telemetry) {
+          getLapTelemetry(nextLap.lapNumber)
+            .then((telem) => cacheLapData(nextLap.lapNumber, { telemetry: telem }))
+            .catch(() => {});
+        }
       }
     }
-  }, [currentTime, laps, selectedLapNumber, setSelectedLap, lapCache, isPlaying, cacheLapData]);
+  }, [
+    currentTime,
+    laps,
+    selectedLapNumber,
+    setSelectedLap,
+    lapCache,
+    isPlaying,
+    cacheLapData,
+  ]);
+
+  // Handle distance changes from track canvas or chart — syncs timeline + chart + cursor
+  const handleDistanceChange = useCallback(
+    (distance: number | null) => {
+      setCursorDistance(distance);
+
+      if (distance === null || !laps.length || selectedLapNumber === null) return;
+
+      // Find the active lap
+      const activeLap = laps.find((l) => l.lapNumber === selectedLapNumber);
+      if (!activeLap) return;
+
+      // Get telemetry for the active lap
+      const data =
+        lapCache[activeLap.lapNumber]?.telemetry ?? lapTelemetry;
+      if (!data || data.samples.length === 0) return;
+
+      // Binary search for nearest sample by lapDistance
+      const samples = data.samples;
+      let lo = 0;
+      let hi = samples.length - 1;
+      while (hi - lo > 1) {
+        const mid = (lo + hi) >>> 1;
+        if (samples[mid].lapDistance <= distance) {
+          lo = mid;
+        } else {
+          hi = mid;
+        }
+      }
+      const nearest =
+        Math.abs(samples[lo].lapDistance - distance) <=
+        Math.abs(samples[hi].lapDistance - distance)
+          ? samples[lo]
+          : samples[hi];
+
+      setTelemetrySample(nearest);
+
+      // Convert to absolute time and seek
+      const absoluteTime = activeLap.startTimestamp + nearest.timestamp;
+      seek(absoluteTime);
+    },
+    [laps, selectedLapNumber, lapCache, lapTelemetry, seek]
+  );
 
   // Sync state when playback stops so manual interaction picks up the right position
   const prevPlayingRef = useRef(false);
@@ -477,7 +560,7 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
   const deltaValue = useMemo(() => {
     if (
       selectedLapNumber === null ||
-      selectedLapNumber <= 1 ||
+      selectedLapNumber < 1 ||
       !effectiveSample ||
       !effectiveCursorDistance
     )
@@ -493,18 +576,38 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
 
     // If we are comparing against best lap
     const bestLapData = lapCache[bestLap.lapNumber]?.telemetry;
-    if (!bestLapData) return null;
+    if (!bestLapData || bestLapData.samples.length === 0) return null;
 
-    // Find sample in best lap at roughly the same distance
-    const refSample = bestLapData.samples.find(
-      (s) => Math.abs(s.lapDistance - effectiveCursorDistance) < 5
-    );
+    // Find sample in best lap at roughly the same distance using binary search
+    const samples = bestLapData.samples;
+    let lo = 0;
+    let hi = samples.length - 1;
+    while (hi - lo > 1) {
+      const mid = (lo + hi) >>> 1;
+      if (samples[mid].lapDistance <= effectiveCursorDistance) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+    }
 
-    if (!refSample) return null;
+    const refSample =
+      Math.abs(samples[lo].lapDistance - effectiveCursorDistance) <=
+      Math.abs(samples[hi].lapDistance - effectiveCursorDistance)
+        ? samples[lo]
+        : samples[hi];
+
+    if (Math.abs(refSample.lapDistance - effectiveCursorDistance) > 10) return null;
 
     // Delta = Current Time - Reference Time
     return effectiveSample.timestamp - refSample.timestamp;
-  }, [selectedLapNumber, effectiveSample, effectiveCursorDistance, laps, lapCache]);
+  }, [
+    selectedLapNumber,
+    effectiveSample,
+    effectiveCursorDistance,
+    laps,
+    lapCache,
+  ]);
 
   // Handle Open File from within Analysis
   const handleOpenFile = useCallback(async () => {
@@ -598,18 +701,34 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
           ) : (
             noData
           );
+        case 'lap-comparison':
+          return (
+            <LapList
+              laps={laps}
+              selectedLapNumber={selectedLapNumber}
+              onLapSelect={setSelectedLap}
+            />
+          );
+        case 'sectors':
+          return (
+            <div className={styles.comingSoon}>Sectors Coming Soon</div>
+          );
         default:
           return <div className={styles.comingSoon}>Coming Soon</div>;
       }
     },
-    [t, lapTelemetry, cursorDistance, setCursorDistance]
+    [t, laps, selectedLapNumber, setSelectedLap]
   );
 
   // Filter widgets
   const telemetryWidgets = useMemo(
     () =>
       currentLayout.filter(
-        (w) => w.i !== 'track' && w.i !== 'timeline' && w.i !== 'mini-chart' && w.visible
+        (w) =>
+          w.i !== 'track' &&
+          w.i !== 'timeline' &&
+          w.i !== 'mini-chart' &&
+          w.visible
       ),
     [currentLayout]
   );
@@ -749,7 +868,10 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
                 </div>
               }
             >
-              <div className={styles.trackContainer} style={{ background: '#1a1a1a' }}>
+              <div
+                className={styles.trackContainer}
+                style={{ background: '#1a1a1a' }}
+              >
                 {isLoadingTrajectory ? (
                   <div className={styles.loadingPlaceholder}>
                     <span className={styles.spinner} />
@@ -758,15 +880,13 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
                   <TrackCanvas
                     trajectory={trajectory}
                     envelope={envelope}
-                    colorMode={colorMode}
                     showBoundaries={true}
                     showEnvelope={true}
-                    cursorDistance={isPlaying ? null : effectiveCursorDistance}
                     cursorDistanceRef={cursorDistanceRef}
                     currentLapTime={currentLapTimeDisplay}
                     currentLapNumber={selectedLapNumber}
                     deltaTime={deltaValue}
-                    onDistanceHover={setCursorDistance}
+                    onDistanceHover={handleDistanceChange}
                   />
                 ) : (
                   <div className={styles.placeholder}>
@@ -834,8 +954,6 @@ export function AnalysisView({ onBack }: AnalysisViewProps) {
           {lapTelemetry ? (
             <TelemetryChart
               data={lapTelemetry.samples}
-              cursorDistance={effectiveCursorDistance}
-              onCursorChange={setCursorDistance}
               height="100%"
             />
           ) : (

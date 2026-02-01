@@ -58,7 +58,8 @@ const defaultPresets: Record<
     { i: 'pedals', x: 1, y: 3, w: 1, h: 3, visible: true, minW: 1, minH: 2 },
     { i: 'gforce', x: 0, y: 6, w: 1, h: 3, visible: true, minW: 1, minH: 2 },
     { i: 'tires', x: 1, y: 6, w: 1, h: 3, visible: true, minW: 1, minH: 2 },
-    { i: 'brakes', x: 0, y: 9, w: 2, h: 3, visible: true, minW: 1, minH: 2 },
+    { i: 'brakes', x: 0, y: 9, w: 1, h: 3, visible: true, minW: 1, minH: 2 },
+    { i: 'lap-comparison', x: 1, y: 9, w: 1, h: 3, visible: true, minW: 1, minH: 2 },
   ],
   pro: [
     { i: 'dashboard', x: 0, y: 0, w: 1, h: 3, visible: true, minW: 1, minH: 2 },
